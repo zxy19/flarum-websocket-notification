@@ -1,0 +1,23 @@
+.notification-floater {
+    position: fixed;
+    left: 300px;
+    bottom: 80px;
+    right: 300px;
+    border: #1e88e5 2px solid;
+    z-index: 100;
+}
+
+.notification-floater.hidden {
+    display: none;
+}
+
+.notification-floater-item {
+    transition: transform 0.5s;
+    transform: scaleY(0);
+    height: 0;
+}
+
+.notification-floater-item.in {
+    transform: scaleY(1);
+    height: unset;
+}

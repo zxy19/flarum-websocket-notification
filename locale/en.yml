@@ -1,0 +1,23 @@
+xypp-websocket-notification:
+  # For more details on the format
+  # Checkout https://docs.flarum.org/extend/i18n/#appendix-a-standard-key-format
+  admin:
+    settings:
+      websocket:
+        title: Websocket
+        desc: The websocket server settings.
+        address: The listening address of the websocket server.
+        port: The listening port of the websocket server.
+        cert: The path to the certificate file.
+        pk: The path to the private key file.
+        self-signed: Whether the websocket server is using a self-signed certificate.
+      internal:
+        title: Internal Server
+        desc: Internal Server is used to send sync command from fpm process.
+        address: The listening address of the websocket server.
+        port: The listening port of the websocket server.
+        cert: The path to the certificate file.
+        pk: The path to the private key file.
+        self-signed: Whether the websocket server is using a self-signed certificate.
+  forum:
+  
