@@ -8,7 +8,7 @@
     "license": "MIT",
     "require": {
         "flarum/core": "^1.2.0",
-        "phrity/websocket": "3.1"
+        "phrity/websocket": "2.2"
     },
     "authors": [
         {
