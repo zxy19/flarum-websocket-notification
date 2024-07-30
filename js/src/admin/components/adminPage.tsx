@@ -27,6 +27,11 @@ export default class adminPage extends ExtensionPage {
                     setting: `xypp.ws_notification.common.public_address`,
                     label: _trans(`settings.common.public_address`),
                 })}
+                {this.buildSettingComponent({
+                    type: "text",
+                    setting: `xypp.ws_notification.common.internal_address`,
+                    label: _trans(`settings.common.internal_address`),
+                })}
             </div>
             {/** 功能设置 */}
             <div className="xypp-wsn-adminPage-group">

@@ -5,6 +5,7 @@ xypp-websocket-notification:
         title: 通用
         desc: 通用设置
         public_address: 外网连接地址
+        internal_address: fpm进程可连接的内部地址.
       function:
         title: 功能
         desc: 功能设置

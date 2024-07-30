@@ -48,6 +48,7 @@ class MainWebsocket
     public function start(Command $context, WebsocketConfig $config, WebsocketConfig $internalConfig)
     {
         $this->stateManager->clear();
+        $this->connectionManager->clear();
         $this->commandContext = $context;
         $this->commandContext->info("Preparing server...");
         $this->server = ServerUtil::makeServer($config);

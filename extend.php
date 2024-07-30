@@ -36,6 +36,7 @@ return array_merge([
         ->register(Provider::class),
     (new Extend\Settings())
         ->default("xypp.ws_notification.common.public_address", "")
+        ->default("xypp.ws_notification.common.internal_address", "")
         ->default("xypp.ws_notification.websocket.port", 18080)
         ->default("xypp.ws_notification.websocket.address", "0.0.0.0")
         ->default("xypp.ws_notification.websocket.cert", "")
@@ -47,5 +48,5 @@ return array_merge([
         ->default("xypp.ws_notification.internal.pk", "")
         ->default("xypp.ws_notification.internal.self-signed", false),
     (new Extend\User())
-        ->registerPreference("xyppWsn-floater-position",null,"center")
+        ->registerPreference("xyppWsn-floater-position", null, "center")
 ], require (__DIR__ . "/src/Integration/IntegrationExtend.php"));

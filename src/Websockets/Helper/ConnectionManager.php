@@ -87,4 +87,9 @@ class ConnectionManager
         }
         return $ret;
     }
+
+    public function clear()
+    {
+        WebsocketAccessToken::query()->delete();
+    }
 }

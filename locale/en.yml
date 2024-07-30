@@ -5,6 +5,7 @@ xypp-websocket-notification:
         title: Common
         desc: The common settings.
         public_address: The address to connect.
+        internal_address: The address to connect for fpm.
       function:
         title: Function
         desc: The function settings.

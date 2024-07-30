@@ -15,6 +15,11 @@ class AddrUtil
             if ($tmp) {
                 return $tmp;
             }
+        } else {
+            $tmp = $setting->get('xypp.ws_notification.common.internal_address');
+            if ($tmp) {
+                return $tmp;
+            }
         }
         $config = WebsocketConfig::readSetting($setting, $local ? 'internal' : 'websocket', $local ? "127.0.0.1" : "0.0.0.0", $local ? 18081 : 18080);
         $scheme = ($config->pk && $config->cert) ? 'wss' : 'ws';
