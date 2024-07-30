@@ -1,29 +1,26 @@
 <?php
 
-namespace Xypp\WsNotification\Helper;
+namespace Xypp\WsNotification\Websockets\Helper;
 
 use Flarum\Database\AbstractModel;
 use Xypp\WsNotification\AbstractDataDispatchType;
 use Xypp\WsNotification\Data\ModelPath;
-use Xypp\WsNotification\Extend\DataDispatchTypeCollection;
-use Xypp\WsNotification\Websockets\Bridge;
+use Xypp\WsNotification\Extend\WebsocketDataCollection;
 
 class DataDispatchHelper
 {
-    protected Bridge $bridge;
-    protected DataDispatchTypeCollection $types;
-    public function __construct(Bridge $bridge, DataDispatchTypeCollection $types)
+    protected WebsocketDataCollection $wsData;
+    public function __construct( WebsocketDataCollection $types)
     {
-        $this->bridge = $bridge;
-        $this->types = $types;
+        $this->wsData = $types;
     }
     public function getDispatchTypeByModel(mixed $model): ?AbstractDataDispatchType
     {
-        return $this->types->getTypeByModel($model);
+        return $this->wsData->getTypeByModel($model);
     }
     public function getDispatchType(string $name): ?AbstractDataDispatchType
     {
-        return $this->types->getType($name);
+        return $this->wsData->getType($name);
     }
     public function directPath(AbstractModel $model)
     {
@@ -31,10 +28,6 @@ class DataDispatchHelper
         if (!$t)
             return null;
         return (new ModelPath())->addWithId($t->name, $model->getKey());
-    }
-    public function dispatch(ModelPath $path)
-    {
-        $this->bridge->sync($path);
     }
     public function getModelByPath(ModelPath $modelPath)
     {
@@ -44,7 +37,7 @@ class DataDispatchHelper
             return null;
         return $type->getModel($modelPath);
     }
-    
+
     public function canSubscribe(?int $user_id, ModelPath $path): bool
     {
         $isOk = true;
@@ -56,5 +49,9 @@ class DataDispatchHelper
                 $isOk = $isOk && $type->canSubscribe($user_id, $path);
         });
         return $isOk;
+    }
+    public function connected(int $id)
+    {
+        return $this->wsData->connected($id);
     }
 }

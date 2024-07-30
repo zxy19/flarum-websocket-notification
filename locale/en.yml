@@ -1,8 +1,16 @@
 xypp-websocket-notification:
-  # For more details on the format
-  # Checkout https://docs.flarum.org/extend/i18n/#appendix-a-standard-key-format
   admin:
     settings:
+      common:
+        title: Common
+        desc: The common settings.
+        public_address: The address to connect.
+      function:
+        title: Function
+        desc: The function settings.
+        discussion: Discussion List
+        post: Post Stream
+        notification: Notification
       websocket:
         title: Websocket
         desc: The websocket server settings.
@@ -20,4 +28,11 @@ xypp-websocket-notification:
         pk: The path to the private key file.
         self-signed: Whether the websocket server is using a self-signed certificate.
   forum:
-  
+    new_discussion: "New"
+    close_notification_floater: " Close"
+    notification_floater:
+      title: "Notification Floater"
+      desc: "Position to show the notification floater."
+      left: "Left"
+      right: "Right"
+      center: "Center"

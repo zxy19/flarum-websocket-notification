@@ -3,8 +3,8 @@
 namespace Xypp\WsNotification\Websockets\Util;
 
 use Xypp\WsNotification\Data\WebsocketConfig;
-use Xypp\WsNotification\Websockets\StreamFactoryWithContext;
-use Xypp\WsNotification\Websockets\WebsocketServerSplit;
+use Xypp\WsNotification\Websockets\Class\StreamFactoryWithContext;
+use Xypp\WsNotification\Websockets\Class\WebsocketServerSplit;
 
 class ServerUtil
 {

@@ -1,11 +1,40 @@
+:root {
+    --new-post-bg: #b0bec5;
+}
+
+:root when (@config-dark-mode =true) {
+    --new-post-bg: #37474f;
+}
+
 .notification-floater {
     position: fixed;
-    left: 300px;
-    bottom: 80px;
-    right: 300px;
     border: #1e88e5 2px solid;
     z-index: 100;
+    bottom: 80px;
 }
+
+.notification-floater.center {
+    left: 300px;
+    right: 300px;
+}
+
+@media (max-width: 600px) {
+    .notification-floater.center {
+        left: 50px;
+        right: 50px;
+    }
+}
+
+.notification-floater.left {
+    left: 0;
+    width: 300px;
+}
+
+.notification-floater.right {
+    width: 300px;
+    right: 0;
+}
+
 
 .notification-floater.hidden {
     display: none;
@@ -13,6 +42,7 @@
 
 .notification-floater-item {
     transition: transform 0.5s;
+    transform-origin: bottom;
     transform: scaleY(0);
     height: 0;
 }
@@ -20,4 +50,48 @@
 .notification-floater-item.in {
     transform: scaleY(1);
     height: unset;
+}
+.notification-floater-close-container{
+    text-align: right;
+    background-color: var(--control-bg);
+}
+
+
+.ComingDiscussion {
+    padding: 4px 12px;
+    background: var(--new-post-bg);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    width: 100%;
+    display: flex;
+
+    .ComingDiscussion-icon {
+        flex-basis: 30px;
+        text-align: center;
+    }
+
+    .ComingDiscussion-item-container {
+        flex-basis: ~"calc(100% - 60px)";
+        padding: 0 5px;
+        width: ~"calc(100% - 60px)";
+        overflow: hidden;
+
+        .ComingDiscussion-item {
+            .ComingDiscussion-count {
+                font-size: 11px;
+                padding: 1px 5px;
+                border-radius: 20px;
+                background: var(--badge-bg);
+                margin-right: 4px;
+            }
+
+            .ComingDiscussion-link {
+                color: var(--text-color);
+            }
+        }
+    }
+
+    .ComingDiscussion-Reload {
+        flex-basis: 30px;
+    }
 }

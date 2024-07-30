@@ -1,6 +1,7 @@
 <?php
 
 namespace Xypp\WsNotification;
+
 use Xypp\WsNotification\Data\ModelPath;
 
 
@@ -8,7 +9,6 @@ abstract class AbstractDataDispatchType
 {
     public string $model;
     public string $name;
-
     public function __construct(string $name, string $model)
     {
         $this->model = $model;

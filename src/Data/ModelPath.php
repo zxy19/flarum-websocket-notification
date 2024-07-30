@@ -66,6 +66,7 @@ class ModelPath implements \Stringable
         if ($tmp) {
             return $tmp["id"];
         }
+        return null;
     }
     public function getName(?string $type = null): ?string
     {
@@ -73,6 +74,7 @@ class ModelPath implements \Stringable
         if ($tmp) {
             return $tmp["name"];
         }
+        return null;
     }
     public function getData()
     {

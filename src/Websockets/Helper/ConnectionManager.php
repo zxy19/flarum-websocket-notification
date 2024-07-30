@@ -1,9 +1,9 @@
 <?php
 
-namespace Xypp\WsNotification\Websockets\Util;
+namespace Xypp\WsNotification\Websockets\Helper;
 
 use Psr\Http\Message\ServerRequestInterface;
-use Xypp\WsNotification\Helper\DataDispatchHelper;
+use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 use Xypp\WsNotification\WebsocketAccessToken;
 use Websocket;
 
@@ -11,6 +11,7 @@ class ConnectionManager
 {
     protected array $connections = [];
     protected array $id2user_id = [];
+    protected array $user_id2connections = [];
     protected int $id = 0;
     protected DataDispatchHelper $helper;
     public function __construct(DataDispatchHelper $helper)

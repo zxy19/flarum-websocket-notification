@@ -1,6 +1,6 @@
 <?php
 
-namespace Xypp\WsNotification\Websockets;
+namespace Xypp\WsNotification\Websockets\Class;
 
 use Phrity\Net\SocketServer;
 use Phrity\Net\StreamFactory;

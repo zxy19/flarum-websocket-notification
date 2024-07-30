@@ -10,11 +10,39 @@ export default class adminPage extends ExtensionPage {
         "port", "address", "cert", "pk", "self-signed"
     ];
     WS_TYPES = ["websocket", "internal"];
+    WS_FUNCTIONS = ["discussion", "post", "notification"]
     oncreate(vnode: any): void {
         super.oncreate(vnode);
     }
     content(vnode: any) {
         return <div className="xypp-wsn-adminPage-container">
+            {/** 通用设置 */}
+            <div className="xypp-wsn-adminPage-group">
+                <h2>{_trans(`settings.common.title`)}</h2>
+                <div>
+                    {_trans(`settings.common.desc`)}
+                </div>
+                {this.buildSettingComponent({
+                    type: "text",
+                    setting: `xypp.ws_notification.common.public_address`,
+                    label: _trans(`settings.common.public_address`),
+                })}
+            </div>
+            {/** 功能设置 */}
+            <div className="xypp-wsn-adminPage-group">
+                <h2>{_trans(`settings.function.title`)}</h2>
+                <div>
+                    {_trans(`settings.function.desc`)}
+                </div>
+                {this.WS_FUNCTIONS.map((key) => {
+                    return this.buildSettingComponent({
+                        type: "boolean",
+                        setting: `xypp.ws_notification.function.${key}`,
+                        label: _trans(`settings.function.${key}`),
+                    })
+                })}
+            </div>
+            {/** WebSocket设置 */}
             {this.WS_TYPES.map((type) => {
                 return <div className="xypp-wsn-adminPage-group">
                     <h2>{_trans(`settings.${type}.title`)}</h2>
@@ -25,7 +53,6 @@ export default class adminPage extends ExtensionPage {
                         return this.buildSettingComponent({
                             type: key === "self-signed" ? "boolean" : "text",
                             setting: `xypp.ws_notification.${type}.${key}`,
-                            default: 'UTC',
                             label: _trans(`settings.${type}.${key}`),
                         })
                     })}

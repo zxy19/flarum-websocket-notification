@@ -10,6 +10,12 @@ class AddrUtil
 {
     public static function getAddr(SettingsRepositoryInterface $setting, WebsocketAccessToken $token, bool $local = false): string
     {
+        if (!$local) {
+            $tmp = $setting->get('xypp.ws_notification.common.public_address');
+            if ($tmp) {
+                return $tmp;
+            }
+        }
         $config = WebsocketConfig::readSetting($setting, $local ? 'internal' : 'websocket', $local ? "127.0.0.1" : "0.0.0.0", $local ? 18081 : 18080);
         $scheme = ($config->pk && $config->cert) ? 'wss' : 'ws';
         $addr = $config->address;

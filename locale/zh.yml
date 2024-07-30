@@ -1,0 +1,38 @@
+xypp-websocket-notification:
+  admin:
+    settings:
+      common:
+        title: 通用
+        desc: 通用设置
+        public_address: 外网连接地址
+      function:
+        title: 功能
+        desc: 功能设置
+        discussion: 帖子列表
+        post: 回复列表
+        notification: 通知
+      websocket:
+        title: Websocket
+        desc: Websocket服务器设置
+        address: 监听地址
+        port: 监听端口
+        cert: 证书路径
+        pk: 私钥路径
+        self-signed: 是否使用自签名证书
+      internal:
+        title: 内部服务器
+        desc: 内部服务器用于在FPM进程和Webdocker进程通信
+        address: 监听地址
+        port: 监听端口
+        cert: 证书路径
+        pk: 私钥路径
+        self-signed: 是否使用自签名证书
+  forum:
+    new_discussion: "新帖子"
+    close_notification_floater: " 关闭"
+    notification_floater:
+      title: "消息浮窗"
+      desc: "显示消息浮窗的位置."
+      left: "左"
+      right: "右"
+      center: "中间"

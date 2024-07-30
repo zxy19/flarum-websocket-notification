@@ -6,7 +6,7 @@ use Flarum\Api\Controller\AbstractCreateController;
 use Flarum\Http\RequestUtil;
 use Xypp\WsNotification\Api\Serializer\WebsocketAccessTokenSerializer;
 use Xypp\WsNotification\WebsocketAccessToken;
-use Xypp\WsNotification\Websockets\Bridge;
+use Xypp\WsNotification\Helper\Bridge;
 
 class CreateWebsocketAccessTokenController extends AbstractCreateController
 {

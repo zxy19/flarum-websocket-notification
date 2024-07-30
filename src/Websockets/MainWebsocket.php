@@ -9,10 +9,13 @@ use Psr\Http\Message\ServerRequestInterface;
 use WebSocket;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Data\WebsocketConfig;
-use Xypp\WsNotification\Helper\DataDispatchHelper;
-use Xypp\WsNotification\Websockets\Util\ConnectionManager;
 use Xypp\WsNotification\Websockets\Util\ServerUtil;
-use Xypp\WsNotification\Websockets\Util\SubscribeManager;
+use Xypp\WsNotification\Websockets\Class\WebsocketServerSplit;
+use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
+use Xypp\WsNotification\Websockets\Helper\ConnectionManager;
+use Xypp\WsNotification\Websockets\Helper\StateManager;
+use Xypp\WsNotification\Websockets\Helper\SubscribeManager;
+use Xypp\WsNotification\Websockets\Helper\SyncManager;
 use Illuminate\Console\Command;
 
 class MainWebsocket
@@ -26,18 +29,25 @@ class MainWebsocket
     protected DataDispatchHelper $helper;
     protected SubscribeManager $subscribeManager;
     protected ConnectionManager $connectionManager;
+    protected StateManager $stateManager;
+    protected SyncManager $syncManager;
     protected Command $commandContext;
     public function __construct(
         DataDispatchHelper $helper,
         SubscribeManager $subscribeManager,
-        ConnectionManager $connectionManager
+        ConnectionManager $connectionManager,
+        StateManager $stateManager,
+        SyncManager $syncManager
     ) {
         $this->helper = $helper;
         $this->subscribeManager = $subscribeManager;
         $this->connectionManager = $connectionManager;
+        $this->stateManager = $stateManager;
+        $this->syncManager = $syncManager;
     }
     public function start(Command $context, WebsocketConfig $config, WebsocketConfig $internalConfig)
     {
+        $this->stateManager->clear();
         $this->commandContext = $context;
         $this->commandContext->info("Preparing server...");
         $this->server = ServerUtil::makeServer($config);
@@ -77,6 +87,13 @@ class MainWebsocket
             )
             ->onClose(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
                 $id = $connection->getMeta('id');
+                $user_id = $this->connectionManager->user($id);
+                if ($user_id) {
+                    $releases = $this->stateManager->getDisconnectReleased($user_id);
+                    foreach ($releases as $path) {
+                        $this->syncManager->performReleasing($path);
+                    }
+                }
                 $this->subscribeManager->unsubscribe($id);
                 $this->connectionManager->remove($id);
                 $this->commandContext->info("Connection closed: {$connection->getMeta('id')}");
@@ -89,59 +106,37 @@ class MainWebsocket
         $data = json_decode($message->getContent());
         if (!$data)
             return;
-        $id = $connection->getMeta('id');
-        if ($data->type == 'sync') {//Internal command.
-            if (!$connection->getMeta("internal"))
-                return;
-            $path = new ModelPath($data->path);
-            $this->performSync($path);
-        } else if ($data->type == 'subscribe') {//Set subscribe.
-            $this->subscribeManager->unsubscribe($id);
-            $paths = $data->path;
-            if (!is_array($paths))
-                $paths = [$paths];
-            foreach ($paths as $path) {
-                $path = new ModelPath($path);
-                $r = $this->subscribeManager->subscribe($id, $path);
-
-                if ($r) {
-                    $this->commandContext->info("Subscribe({$id}):{$path}");
+        try {
+            $id = $connection->getMeta('id');
+            if ($data->type == 'sync') {//Internal command.
+                if (!$connection->getMeta("internal"))
+                    return;
+                $path = new ModelPath($data->path);
+                if ($path->getId("state")) {
+                    $this->stateManager->setState($path);
+                    $this->syncManager->performSyncState($path);
                 } else {
-                    $this->commandContext->info("Subscribe({$id}):{$path} rejected.");
+                    $this->syncManager->performSync($path);
+                }
+            } else if ($data->type == 'subscribe') {//Set subscribe.
+                $this->subscribeManager->unsubscribe($id);
+                $paths = $data->path;
+                if (!is_array($paths))
+                    $paths = [$paths];
+                foreach ($paths as $path) {
+                    $path = new ModelPath($path);
+                    $r = $this->subscribeManager->subscribe($id, $path);
+
+                    if ($r) {
+                        $this->commandContext->info("Subscribe({$id}):{$path}");
+                    } else {
+                        $this->commandContext->info("Subscribe({$id}):{$path} rejected.");
+                    }
                 }
             }
+        } catch (\Exception $e) {
+            $this->commandContext->warn($e->getMessage());
         }
     }
 
-    protected function performSync(ModelPath $path)
-    {
-        $ids = $this->subscribeManager->collectIdForPath($path);
-        if (empty($ids)) {
-            return;
-        }
-        $model = $this->helper->getModelByPath($path);
-        if (!$model) {
-            return;
-        }
-        $idGrped = $this->connectionManager->groupIdByUser($ids);
-        $dispatchType = $this->helper->getDispatchType($path->getName());
-        if (!$dispatchType)
-            return;
-        foreach ($idGrped as $user_id => $ids) {
-            if (!$user_id)
-                $user_id = null;
-            $dispatchType->deliver(
-                $user_id,
-                $path,
-                $model,
-                function ($attr) use ($ids, $path) {
-                    $this->connectionManager->broadcast($ids, json_encode([
-                        "type" => "sync",
-                        "path" => strval($path),
-                        "data" => $attr
-                    ]));
-                }
-            );
-        }
-    }
 }

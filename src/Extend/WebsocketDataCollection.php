@@ -4,15 +4,20 @@ namespace Xypp\WsNotification\Extend;
 
 use Xypp\WsNotification\AbstractDataDispatchType;
 
-class DataDispatchTypeCollection
+class WebsocketDataCollection
 {
     protected array $types = [];
     protected array $class2name = [];
+    protected array $connectCb = [];
 
     public function add($type): void
     {
         $this->types[$type->name] = $type;
         $this->class2name[$type->model] = $type->name;
+    }
+    public function addConnectCb(callable $cb): void
+    {
+        $this->connectCb[] = $cb;
     }
 
     public function getTypes(): array
@@ -36,5 +41,11 @@ class DataDispatchTypeCollection
             return $this->getType($this->class2name[$model]);
         }
         return null;
+    }
+    public function connected($id)
+    {
+        foreach ($this->connectCb as $cb) {
+            $cb($id);
+        }
     }
 }

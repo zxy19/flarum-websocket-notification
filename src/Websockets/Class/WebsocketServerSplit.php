@@ -6,7 +6,7 @@
  * This file is part of Websocket PHP and is free software under the ISC License.
  */
 
-namespace Xypp\WsNotification\Websockets;
+namespace Xypp\WsNotification\Websockets\Class;
 
 use InvalidArgumentException;
 use Phrity\Net\{

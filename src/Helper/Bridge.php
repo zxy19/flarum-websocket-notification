@@ -1,6 +1,6 @@
 <?php
 
-namespace Xypp\WsNotification\Websockets;
+namespace Xypp\WsNotification\Helper;
 
 use Flarum\Settings\SettingsRepositoryInterface;
 use Phrity\Net\Uri;
@@ -13,24 +13,29 @@ use WebSocket;
 class Bridge
 {
     protected ?\Websocket\Client $connection = null;
+    protected $formed = false;
     protected $settings;
     public function __construct(SettingsRepositoryInterface $settings)
     {
         $this->settings = $settings;
+        $this->connection = null;
+        $this->formed = false;
     }
     public function __destruct()
     {
-        if ($this->connection) {
-            $this->connection->close();
-        }
+        if ($this->formed)
+            if ($this->connection) {
+                $this->connection->close();
+            }
     }
     protected function formConnection(): bool
     {
-        if ($this->connection) {
-            if ($this->connection->isConnected() && $this->connection->isWritable()) {
-                return true;
+        if ($this->formed)
+            if ($this->connection) {
+                if ($this->connection->isConnected() && $this->connection->isWritable()) {
+                    return true;
+                }
             }
-        }
         $token = WebsocketAccessToken::generate(null, 10, true);
         $uri = new Uri(AddrUtil::getAddr($this->settings, $token, true));
         $this->connection = new \WebSocket\Client($uri);
@@ -40,6 +45,7 @@ class Bridge
             unset($this->connection);
             return false;
         }
+        $this->formed = true;
         return true;
     }
     public function sync(ModelPath $path): bool
@@ -50,6 +56,21 @@ class Bridge
             $this->connection->send(new Text(json_encode([
                 "type" => "sync",
                 "path" => $path->getPath()
+            ])));
+        } catch (\Exception $e) {
+            return false;
+        }
+        return true;
+    }
+    public function state($user_id, $newStates): bool
+    {
+        if (!$this->formConnection())
+            return false;
+        try {
+            $this->connection->send(new Text(json_encode([
+                "type" => "state",
+                "user_id" => $user_id,
+                "states" => $newStates
             ])));
         } catch (\Exception $e) {
             return false;

@@ -33,6 +33,7 @@ var adminPage = /*#__PURE__*/function (_ExtensionPage) {
     _this = _ExtensionPage.call.apply(_ExtensionPage, [this].concat(args)) || this;
     _this.WS_KEYS = ["port", "address", "cert", "pk", "self-signed"];
     _this.WS_TYPES = ["websocket", "internal"];
+    _this.WS_FUNCTIONS = ["discussion", "post", "notification"];
     return _this;
   }
   (0,_babel_runtime_helpers_esm_inheritsLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(adminPage, _ExtensionPage);
@@ -44,14 +45,27 @@ var adminPage = /*#__PURE__*/function (_ExtensionPage) {
     var _this2 = this;
     return m("div", {
       className: "xypp-wsn-adminPage-container"
-    }, this.WS_TYPES.map(function (type) {
+    }, m("div", {
+      className: "xypp-wsn-adminPage-group"
+    }, m("h2", null, _trans("settings.common.title")), m("div", null, _trans("settings.common.desc")), this.buildSettingComponent({
+      type: "text",
+      setting: "xypp.ws_notification.common.public_address",
+      label: _trans("settings.common.public_address")
+    })), m("div", {
+      className: "xypp-wsn-adminPage-group"
+    }, m("h2", null, _trans("settings.function.title")), m("div", null, _trans("settings.function.desc")), this.WS_FUNCTIONS.map(function (key) {
+      return _this2.buildSettingComponent({
+        type: "boolean",
+        setting: "xypp.ws_notification.function." + key,
+        label: _trans("settings.function." + key)
+      });
+    })), this.WS_TYPES.map(function (type) {
       return m("div", {
         className: "xypp-wsn-adminPage-group"
       }, m("h2", null, _trans("settings." + type + ".title")), m("div", null, _trans("settings." + type + ".desc")), _this2.WS_KEYS.map(function (key) {
         return _this2.buildSettingComponent({
           type: key === "self-signed" ? "boolean" : "text",
           setting: "xypp.ws_notification." + type + "." + key,
-          "default": 'UTC',
           label: _trans("settings." + type + "." + key)
         });
       }));

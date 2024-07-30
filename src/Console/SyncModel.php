@@ -5,10 +5,7 @@ namespace Xypp\WsNotification\Console;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Xypp\WsNotification\Data\ModelPath;
-use Xypp\WsNotification\Websockets\Bridge;
-use Xypp\WsNotification\Websockets\Main;
-use Xypp\WsNotification\Websockets\MainWebsocket;
-
+use Xypp\WsNotification\Helper\Bridge;
 class SyncModel extends Command
 {
     /**

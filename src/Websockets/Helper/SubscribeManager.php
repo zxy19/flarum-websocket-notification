@@ -1,9 +1,9 @@
 <?php
 
-namespace Xypp\WsNotification\Websockets\Util;
+namespace Xypp\WsNotification\Websockets\Helper;
 
 use Xypp\WsNotification\Data\ModelPath;
-use Xypp\WsNotification\Helper\DataDispatchHelper;
+use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 
 class SubscribeManager
 {
@@ -71,10 +71,10 @@ class SubscribeManager
     public function walkThroughPath(ModelPath $path, $subscribe, int $level)
     {
         $ret = [];
-        if (isset($subscribe["_ids"])) {
-            $ret = $subscribe["_ids"];
-        }
         if ($level >= count($path->path)) {
+            if (isset($subscribe["_ids"])) {
+                $ret = $subscribe["_ids"];
+            }
             return $ret;
         }
         $p = $path->path[$level];

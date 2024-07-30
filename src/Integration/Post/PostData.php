@@ -23,10 +23,14 @@ class PostData extends AbstractDataDispatchType
 
     public function deliver(?int $user_id, ModelPath $path, $model, callable $sync): void
     {
-        $attrs = json_decode($this->controller->handle(RequestForSerializer::createWithId($user_id, [
-            "id" => $model
-        ]))->getBody()->getContents());
-        $sync($attrs);
+        try {
+            $attrs = json_decode($this->controller->handle(RequestForSerializer::createWithId($user_id, [
+                "id" => $model
+            ]))->getBody()->getContents());
+            $sync($attrs);
+        } catch (\Exception $e) {
+            return;
+        }
     }
     public function getModel(ModelPath $id)
     {
