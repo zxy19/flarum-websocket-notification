@@ -13,12 +13,12 @@ class AddrUtil
         if (!$local) {
             $tmp = $setting->get('xypp.ws_notification.common.public_address');
             if ($tmp) {
-                return $tmp;
+                return $tmp . $token;
             }
         } else {
             $tmp = $setting->get('xypp.ws_notification.common.internal_address');
             if ($tmp) {
-                return $tmp;
+                return $tmp . $token;
             }
         }
         $config = WebsocketConfig::readSetting($setting, $local ? 'internal' : 'websocket', $local ? "127.0.0.1" : "0.0.0.0", $local ? 18081 : 18080);
