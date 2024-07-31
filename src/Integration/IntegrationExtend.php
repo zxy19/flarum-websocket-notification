@@ -22,7 +22,7 @@ return [
         ->type(State::class)
         ->type(OnlineData::class)
         ->connected(ConnectedOnlineStateCallback::class),
-    (new Extend\notification())
+    (new Extend\Notification())
         ->driver("ws-notification", NotificationDriver::class),
     (new Event())
         ->listen(Saving::class, PostSavingEvent::class)
