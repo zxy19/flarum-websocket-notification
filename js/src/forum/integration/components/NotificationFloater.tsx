@@ -8,7 +8,7 @@ export default class NotificationFloater extends Component<{
     dismiss: () => void
 }> {
     view(vnode: any) {
-        const position = (app.session?.user?.preferences() || {})["xyppWsn-floater-position"] || "center";
+        const position = (app.session?.user?.preferences() || {})["xyppWsnFloaterPosition"] || "center";
         return <div className={showIf(this.attrs.notifications.length > 0, "notification-floater", "notification-floater hidden") + " " + position}>
             {this.attrs.notifications.map(n => {
                 const type = n.notification.data.attributes.contentType;

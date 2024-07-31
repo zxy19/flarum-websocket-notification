@@ -84,6 +84,13 @@ export class WebsocketHelper {
         });
         return this;
     }
+    state(path: ModelPath) {
+        if (!this.app?.session.user) return;
+        this.send({
+            type: "state",
+            path: path.toString()
+        })
+    }
     send(data: { type: string, [key: string]: any }) {
         if (this.ws) {
             this.ws.send(JSON.stringify(data));

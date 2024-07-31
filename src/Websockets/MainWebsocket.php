@@ -98,6 +98,10 @@ class MainWebsocket
                     $connection->close();
                     return;
                 }
+                $user_id = $this->connectionManager->user($id);
+                if ($user_id) {
+                    $this->stateManager->connectedUser($user_id);
+                }
                 $this->commandContext->info("Connection opened: {$connection->getMeta('id')}");
             })
             ->start();
@@ -137,10 +141,17 @@ class MainWebsocket
                 }
             } else if ($data->type == 'ping') {
                 $connection->send(new WebSocket\Message\Text('{"type":"pong"}'));
+            } else if ($data->type == 'state') {
+                $path = new ModelPath($data->path);
+                $userId = $this->connectionManager->user($id);
+                if (!$userId || $userId != $path->getId("state"))
+                    return;
+                $this->stateManager->setState(new ModelPath($data->path));
+                $this->syncManager->performSyncState($path);
+                $this->commandContext->info("State({$id}):{$path}");
             }
         } catch (\Exception $e) {
             $this->commandContext->warn($e->getMessage());
         }
     }
-
 }

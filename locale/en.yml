@@ -6,6 +6,8 @@ xypp-websocket-notification:
         desc: The common settings.
         public_address: The address to connect.
         internal_address: The address to connect for fpm.
+        max_subscribe_hold: Max subscribe path can one connection hold.
+        max_state_hold: Max states can one user hold.
       function:
         title: Function
         desc: The function settings.
@@ -29,7 +31,6 @@ xypp-websocket-notification:
         pk: The path to the private key file.
         self-signed: Whether the websocket server is using a self-signed certificate.
   forum:
-    new_discussion: "New"
     close_notification_floater: " Close"
     notification_floater:
       title: "Notification Floater"
@@ -37,3 +38,8 @@ xypp-websocket-notification:
       left: "Left"
       right: "Right"
       center: "Center"
+    new_discussion:
+      tip: "New"
+      title: "New Discussion"
+      auto_refresh: "Auto refresh after 30 seconds"
+      list_length: "New discussion list length"

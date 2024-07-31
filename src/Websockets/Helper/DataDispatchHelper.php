@@ -10,7 +10,7 @@ use Xypp\WsNotification\Extend\WebsocketDataCollection;
 class DataDispatchHelper
 {
     protected WebsocketDataCollection $wsData;
-    public function __construct( WebsocketDataCollection $types)
+    public function __construct(WebsocketDataCollection $types)
     {
         $this->wsData = $types;
     }
@@ -40,6 +40,9 @@ class DataDispatchHelper
 
     public function canSubscribe(?int $user_id, ModelPath $path): bool
     {
+        if ($path->getName("state")) {
+            return true;
+        }
         $isOk = true;
         $path->each(function ($name, $id) use ($user_id, $path, &$isOk) {
             $type = $this->getDispatchType($name);

@@ -126,4 +126,18 @@ class ModelPath implements \Stringable
         }
         return $ret;
     }
+    public function noDataPathStr(): string
+    {
+        $ret = "";
+        for ($i = 0; $i < count($this->path); $i++) {
+            if ($i > 0) {
+                $ret .= ".";
+            }
+            $ret .= $this->path[$i]["name"];
+            if ($this->path[$i]["id"]) {
+                $ret .= "[" . $this->path[$i]["id"] . "]";
+            }
+        }
+        return $ret;
+    }
 }

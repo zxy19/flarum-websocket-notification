@@ -11,32 +11,36 @@ use Xypp\WsNotification\Data\ModelPath;
 
 class WebsocketUserState extends AbstractModel
 {
-    protected $dates = ['created_at', 'expires_at'];
+    protected $dates = ['created_at', 'updated_at'];
     protected $casts = [
-        'state' => 'array',
+        'data' => 'array',
     ];
     protected $table = 'websocket_user_state';
     public function user()
     {
         return $this->belongsTo(User::class, "user_id", "id");
     }
-    public static function create(int $user_id): WebsocketUserState
+    public static function createPath(int $user_id, ModelPath $modelPath): WebsocketUserState
     {
         $instance = new static();
         $instance->user_id = $user_id;
-        $instance->state = [];
+        $instance->setWithPath($modelPath);
+        $instance->name = $modelPath->getName();
         $instance->updateTimestamps();
         $instance->save();
         return $instance;
     }
-    public function setState(ModelPath $modelPath, $data)
+
+    public function setWithPath(ModelPath $modelPath)
     {
-        $state = $this->state[$modelPath->getPath()] ?? [];
-        $state[$modelPath->getPath()] = $data;
-        $this->state = $state;
-    }
-    public function getState(ModelPath $modelPath, $data)
-    {
-        return $this->state[$modelPath->getPath()] ?? null;
+        $id = $modelPath->getId("state");
+        if (!$id) {
+            return;
+        }
+        $str = $modelPath->noDataPathStr();
+        $ln = intval(strlen("{$id}[state]."));
+        $str = substr($str, $ln);
+        $this->data = $modelPath->getData();
+        $this->path = $str;
     }
 }

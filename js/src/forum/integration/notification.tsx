@@ -58,7 +58,7 @@ export function initNotification() {
     "center": app.translator.trans("xypp-websocket-notification.forum.notification_floater.center")
   }
   extend(SettingsPage.prototype, 'settingsItems', function (items) {
-    const position = (app.session?.user?.preferences() || {})["xyppWsn-floater-position"] || "center";
+    const position = (app.session?.user?.preferences() || {})["xyppWsnFloaterPosition"] || "center";
     items.add(
       'xypp-wsn-floater-position',
       <FieldSet label={app.translator.trans("xypp-websocket-notification.forum.notification_floater.title")} className="Settings-floater">
@@ -69,7 +69,7 @@ export function initNotification() {
           onchange={(value: string) => {
             app.session.user!
               .savePreferences({
-                "xyppWsn-floater-position": value
+                "xyppWsnFloaterPosition": value
               });
           }}
         />

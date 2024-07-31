@@ -2,6 +2,7 @@
 
 namespace Xypp\WsNotification\Websockets\Helper;
 
+use Flarum\User\User;
 use Psr\Http\Message\ServerRequestInterface;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 use Xypp\WsNotification\WebsocketAccessToken;
@@ -11,6 +12,7 @@ class ConnectionManager
 {
     protected array $connections = [];
     protected array $id2user_id = [];
+    protected array $id2user_obj = [];
     protected array $user_id2connections = [];
     protected int $id = 0;
     protected DataDispatchHelper $helper;
@@ -34,7 +36,8 @@ class ConnectionManager
         $connection->setMeta("internal", !!$access->internal);
         if ($access->user_id) {
             $connection->setMeta("user_id", $access->user_id);
-            $this->id2user_id[$this->id] = $access->user_id ?: 0;
+            $this->id2user_id[$this->id] = $access->user_id;
+            $this->id2user_obj[$this->id] = User::find($access->user_id);
         }
         $access->delete();
 
@@ -59,6 +62,10 @@ class ConnectionManager
     public function user($id)
     {
         return $this->id2user_id[$id] ?? null;
+    }
+    public function userObj($id): ?User
+    {
+        return $this->id2user_obj[$id] ?? null;
     }
     public function broadcast(?array $ids, string $data)
     {

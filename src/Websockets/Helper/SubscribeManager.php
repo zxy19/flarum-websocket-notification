@@ -2,6 +2,7 @@
 
 namespace Xypp\WsNotification\Websockets\Helper;
 
+use Flarum\Settings\SettingsRepositoryInterface;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 
@@ -11,13 +12,21 @@ class SubscribeManager
     protected array $user2subPath = [];
     protected DataDispatchHelper $helper;
     protected ConnectionManager $connections;
-    public function __construct(DataDispatchHelper $helper, ConnectionManager $connections)
+    protected int $maxSubscribeHold;
+    public function __construct(DataDispatchHelper $helper, ConnectionManager $connections, SettingsRepositoryInterface $settings)
     {
         $this->helper = $helper;
         $this->connections = $connections;
+        $this->maxSubscribeHold = $settings->get("xypp.ws_notification.common.max_subscribe_hold") ?? 10;
     }
     public function subscribe(int $id, ModelPath $path)
     {
+        if (!isset($this->user2subPath[$id])) {
+            $this->user2subPath[$id] = [];
+        }
+        if (count($this->user2subPath[$id]) >= $this->maxSubscribeHold) {
+            return false;
+        }
         if (
             !$this->helper->canSubscribe(
                 $this->connections->user($id),
@@ -37,9 +46,7 @@ class SubscribeManager
             $currentObj['_ids'] = [];
         }
         $currentObj['_ids'][] = $id;
-        if (!isset($this->user2subPath[$id])) {
-            $this->user2subPath[$id] = [];
-        }
+
         $this->user2subPath[$id][] = $path;
         return true;
     }

@@ -10,7 +10,7 @@ export default class adminPage extends ExtensionPage {
         "port", "address", "cert", "pk", "self-signed"
     ];
     WS_TYPES = ["websocket", "internal"];
-    WS_FUNCTIONS = ["discussion", "post", "notification"]
+    WS_FUNCTIONS = ["discussion", "post", "notification", "like", "type"]
     oncreate(vnode: any): void {
         super.oncreate(vnode);
     }
@@ -31,6 +31,16 @@ export default class adminPage extends ExtensionPage {
                     type: "text",
                     setting: `xypp.ws_notification.common.internal_address`,
                     label: _trans(`settings.common.internal_address`),
+                })}
+                {this.buildSettingComponent({
+                    type: "number",
+                    setting: `xypp.ws_notification.common.max_subscribe_hold`,
+                    label: _trans(`settings.common.max_subscribe_hold`),
+                })}
+                {this.buildSettingComponent({
+                    type: "number",
+                    setting: `xypp.ws_notification.common.max_states_hold`,
+                    label: _trans(`settings.common.max_state_hold`),
                 })}
             </div>
             {/** 功能设置 */}

@@ -2,6 +2,7 @@
 
 namespace Xypp\WsNotification\Websockets\Helper;
 
+use Flarum\Settings\SettingsRepositoryInterface;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 use Xypp\WsNotification\WebsocketUserState;
@@ -13,10 +14,12 @@ class StateManager
     protected array $states = [];
     protected array $user_connections = [];
     protected array $user_states = [];
-    public function __construct(DataDispatchHelper $helper, ConnectionManager $connections)
+    protected int $maxStatesHold;
+    public function __construct(DataDispatchHelper $helper, ConnectionManager $connections, SettingsRepositoryInterface $settings)
     {
         $this->helper = $helper;
         $this->connections = $connections;
+        $this->maxStatesHold = $settings->get('xypp.ws_notification.common.max_states_hold', 10);
     }
     public function setState(ModelPath $path)
     {
@@ -25,13 +28,20 @@ class StateManager
             if (!isset($this->states[$user_id])) {
                 $this->states[$user_id] = [];
             }
-            if (!in_array($path, $this->states[$user_id])) {
-                $this->states[$user_id][] = $path;
+            $pathStr = $path->noDataPathStr();
+            if (!isset($this->states[$user_id][$pathStr])) {
+                if (count($this->states[$user_id]) > $this->maxStatesHold)
+                    return false;
             }
-            if (isset($this->user_states[$user_id])) {
-                $this->user_states[$user_id]->setState($path, $path->getData());
-                $this->user_states[$user_id]->save();
+            $this->states[$user_id][$pathStr] = $path;
+
+            if (!isset($this->user_states[$user_id][$pathStr])) {
+                $this->user_states[$user_id][$pathStr] = WebsocketUserState::createPath($user_id, $path);
+            } else {
+                $this->user_states[$user_id][$pathStr]->setWithPath($path);
+                $this->user_states[$user_id][$pathStr]->save();
             }
+            return true;
         }
         return false;
     }
@@ -43,7 +53,7 @@ class StateManager
             $this->user_connections[$user_id]++;
 
         if (!isset($this->user_states[$user_id])) {
-            $this->user_states[$user_id] = WebsocketUserState::create($user_id);
+            $this->user_states[$user_id] = [];
         }
     }
     public function getDisconnectReleased(int $user_id)
@@ -51,15 +61,19 @@ class StateManager
         /**
          * Only Do State Release When All connections are closed.
          */
-        if (!isset($this->user_connections[$user_id])) {
-            return [];
+        if (isset($this->user_connections[$user_id])) {
+            $this->user_connections[$user_id]--;
+            if ($this->user_connections[$user_id] > 0) {
+                return [];
+            }
+            unset($this->user_connections[$user_id]);
         }
-        $this->user_connections[$user_id]--;
-        if ($this->user_connections[$user_id] > 0) {
-            return [];
-        }
-        unset($this->user_connections[$user_id]);
 
+        /**
+         * Release database
+         */
+        WebsocketUserState::query()->where("user_id", $user_id)->delete();
+        unset($this->user_states[$user_id]);
 
         /**
          * Collect State to Release
@@ -67,7 +81,10 @@ class StateManager
         if (!isset($this->states[$user_id])) {
             return [];
         }
-        $ret = $this->states[$user_id];
+        $ret = [];
+        foreach ($this->states[$user_id] as $_ => $path) {
+            $ret[] = $path;
+        }
         unset($this->states[$user_id]);
         return $ret;
     }

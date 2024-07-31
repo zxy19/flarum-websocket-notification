@@ -30,15 +30,23 @@ export function initPost() {
             }
         }
     });
+    let removeStack = 0;
     extend(DiscussionPage.prototype, "show", function (this: DiscussionPage, r: any, discussion: Discussion) {
-        if (discussion)
+        if (discussion) {
+            removeStack++;
             WebsocketHelper.getInstance().setContext({
                 discussion: discussion!.id()
             }).reSubscribe();
+        }
     })
     extend(DiscussionPage.prototype, "onbeforeremove", function (this: DiscussionPage) {
-        WebsocketHelper.getInstance().setContext({
-            discussion: null
-        }).reSubscribe();
+        if (this.discussion) {
+            removeStack--;
+            if (removeStack < 0) removeStack = 0;
+            if (removeStack == 0)
+                WebsocketHelper.getInstance().setContext({
+                    discussion: null
+                }).reSubscribe();
+        }
     })
 }

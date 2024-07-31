@@ -6,6 +6,8 @@ xypp-websocket-notification:
         desc: 通用设置
         public_address: 外网连接地址
         internal_address: fpm进程可连接的内部地址.
+        max_subscribe_hold: 单个连接最大持有的订阅地址数
+        max_state_hold: 单个用户最大持有的状态数
       function:
         title: 功能
         desc: 功能设置
@@ -22,14 +24,13 @@ xypp-websocket-notification:
         self-signed: 是否使用自签名证书
       internal:
         title: 内部服务器
-        desc: 内部服务器用于在FPM进程和Webdocker进程通信
+        desc: 内部服务器用于在FPM进程和Websocket进程通信
         address: 监听地址
         port: 监听端口
         cert: 证书路径
         pk: 私钥路径
         self-signed: 是否使用自签名证书
   forum:
-    new_discussion: "新帖子"
     close_notification_floater: " 关闭"
     notification_floater:
       title: "消息浮窗"
@@ -37,3 +38,8 @@ xypp-websocket-notification:
       left: "左"
       right: "右"
       center: "中间"
+    new_discussion:
+      tip: "新贴"
+      title: "新的讨论贴"
+      auto_refresh: "30秒后自动刷新"
+      list_length: "展示的新贴列表长度"

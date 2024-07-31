@@ -29,9 +29,6 @@ class SyncManager
             return;
         }
         $model = $this->helper->getModelByPath($path);
-        if (!$model) {
-            return;
-        }
         $idGrped = $this->connectionManager->groupIdByUser($ids);
         $dispatchType = $this->helper->getDispatchType($path->getName());
         if (!$dispatchType) {
@@ -48,7 +45,7 @@ class SyncManager
                     $this->connectionManager->broadcast($ids, json_encode([
                         "type" => "sync",
                         "path" => strval($path),
-                        "data" => $attr
+                        "data" => $attr ?? []
                     ]));
                 }
             );
@@ -60,18 +57,15 @@ class SyncManager
         if (empty($ids)) {
             return;
         }
-        $model = $path->getData();
-        if (!$model) {
-            return;
-        }
+        $from_id = $path->getId("state");
         $idGrped = $this->connectionManager->groupIdByUser($ids);
         foreach ($idGrped as $user_id => $ids) {
-            if (!$user_id)
-                $user_id = null;
+            if ($user_id == $from_id)
+                continue;
             $this->connectionManager->broadcast($ids, json_encode([
                 "type" => "sync",
                 "path" => strval($path),
-                "data" => $model
+                "data" => ["state" => true]
             ]));
         }
     }
@@ -83,14 +77,11 @@ class SyncManager
             return;
         }
         $idGrped = $this->connectionManager->groupIdByUser($ids);
-        $dispatchType = $this->helper->getDispatchType($path->getName());
-        if (!$dispatchType)
-            return;
         foreach ($idGrped as $_ => $ids) {
             $this->connectionManager->broadcast($ids, json_encode([
                 "type" => "sync",
                 "path" => strval($path),
-                "data" => null
+                "data" => ["state" => false]
             ]));
 
         }

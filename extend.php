@@ -37,6 +37,8 @@ return array_merge([
     (new Extend\Settings())
         ->default("xypp.ws_notification.common.public_address", "")
         ->default("xypp.ws_notification.common.internal_address", "")
+        ->default("xypp.ws_notification.common.max_states_hold", 10)
+        ->default("xypp.ws_notification.common.max_subscribe_hold", 10)
         ->default("xypp.ws_notification.websocket.port", 18080)
         ->default("xypp.ws_notification.websocket.address", "0.0.0.0")
         ->default("xypp.ws_notification.websocket.cert", "")
@@ -48,5 +50,7 @@ return array_merge([
         ->default("xypp.ws_notification.internal.pk", "")
         ->default("xypp.ws_notification.internal.self-signed", false),
     (new Extend\User())
-        ->registerPreference("xyppWsn-floater-position", null, "center")
+        ->registerPreference("xyppWsnFloaterPosition", null, "center")
+        ->registerPreference("xyppWsnNewDiscussionAutoRefresh", null, false)
+        ->registerPreference("xyppWsnNewDiscussionListLen", null, 5)
 ], require (__DIR__ . "/src/Integration/IntegrationExtend.php"));
