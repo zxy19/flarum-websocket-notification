@@ -94,7 +94,7 @@ class MainWebsocket
             })
             ->onConnect(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
                 $id = $this->connectionManager->add($connection, $connection->getHandshakeRequest());
-                if(!$id){
+                if (!$id) {
                     $connection->close();
                     return;
                 }
@@ -135,6 +135,8 @@ class MainWebsocket
                         $this->commandContext->info("Subscribe({$id}):{$path} rejected.");
                     }
                 }
+            } else if ($data->type == 'ping') {
+                $connection->send(new WebSocket\Message\Text('{"type":"pong"}'));
             }
         } catch (\Exception $e) {
             $this->commandContext->warn($e->getMessage());

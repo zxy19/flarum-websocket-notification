@@ -9,6 +9,7 @@ export class WebsocketHelper {
     ws?: WebSocket
     context: Record<string, any> = {};
     lastSubscribes: string[] = [];
+    pingInterval?: any;
     static instance?: WebsocketHelper;
     public static getInstance(): WebsocketHelper {
         if (!WebsocketHelper.instance) {
@@ -34,10 +35,17 @@ export class WebsocketHelper {
             this.ws = ws;
             ws.onclose = () => {
                 this.closeHandler();
+                if (this.pingInterval)
+                    clearInterval(this.pingInterval);
+            }
+            ws.onerror = () => {
+                if (this.pingInterval)
+                    clearInterval(this.pingInterval);
             }
             ws.onopen = () => {
                 this.lastSubscribes = [];
                 this.reSubscribe();
+                this.pingInterval = setInterval(this.ping.bind(this), 30000);
             }
             ws.onmessage = (e) => {
                 const data = JSON.parse(e.data);
@@ -80,6 +88,11 @@ export class WebsocketHelper {
         if (this.ws) {
             this.ws.send(JSON.stringify(data));
         }
+    }
+    protected ping() {
+        this.send({
+            type: "ping"
+        });
     }
     protected changed(newSub: string[]): boolean {
         newSub.sort((a, b) => a.localeCompare(b));
