@@ -79,13 +79,6 @@ class MainWebsocket
             ->onText(function (WebsocketServerSplit $server, WebSocket\Connection $connection, WebSocket\Message\Message $message) {
                 $this->message($server, $connection, $message);
             })
-            ->onHandshake(
-                function (WebsocketServerSplit $server, WebSocket\Connection $connection, ServerRequestInterface $request, \Psr\Http\Message\ResponseInterface $respone) {
-                    if ($this->connectionManager->add($connection, $request)) {
-                        $this->commandContext->info("New connection: {$connection->getMeta('id')};UserId:{$connection->getMeta('user_id')}");
-                    }
-                }
-            )
             ->onClose(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
                 $id = $connection->getMeta('id');
                 $user_id = $this->connectionManager->user($id);
@@ -98,6 +91,14 @@ class MainWebsocket
                 $this->subscribeManager->unsubscribe($id);
                 $this->connectionManager->remove($id);
                 $this->commandContext->info("Connection closed: {$connection->getMeta('id')}");
+            })
+            ->onConnect(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
+                $id = $this->connectionManager->add($connection, $connection->getHandshakeRequest());
+                if(!$id){
+                    $connection->close();
+                    return;
+                }
+                $this->commandContext->info("Connection opened: {$connection->getMeta('id')}");
             })
             ->start();
     }
