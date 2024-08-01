@@ -19,10 +19,10 @@ class State extends AbstractDataDispatchType
 
     public function deliver(?int $user_id, ModelPath $path, $model, callable $sync): void
     {
-
+        $sync(["state" => true]);
     }
     public function getModel(ModelPath $id)
     {
-        return false;
+        return null;
     }
 }

@@ -14,6 +14,8 @@ xypp-websocket-notification:
         discussion: Discussion List
         post: Post Stream
         notification: Notification
+        like: Like
+        typing: Type Tip
       websocket:
         title: Websocket
         desc: The websocket server settings.
@@ -43,3 +45,8 @@ xypp-websocket-notification:
       title: "New Discussion"
       auto_refresh: "Auto refresh after 30 seconds"
       list_length: "New discussion list length"
+    typing:
+      title: "正在输入提示"
+      no_type_tip: "Don't show type status"
+      and_more: "and {rest} more user"
+      is_typing: " is typing..."

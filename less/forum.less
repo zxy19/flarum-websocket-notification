@@ -11,6 +11,7 @@
     border: #1e88e5 2px solid;
     z-index: 100;
     bottom: 80px;
+    background: var(--body-bg);
 }
 
 .notification-floater.center {
@@ -96,5 +97,22 @@
         flex-basis: 30px;
         position: relative;
         text-align: center;
+    }
+}
+
+.LineContainer {
+    display: flex;
+    padding: 10px;
+
+    .typingUser {
+        color: var(--text-color);
+
+        .Avatar {
+            --size: 20px;
+        }
+
+        .username {
+            margin: 0 3px;
+        }
     }
 }

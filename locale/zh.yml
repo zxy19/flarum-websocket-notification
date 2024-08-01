@@ -14,6 +14,8 @@ xypp-websocket-notification:
         discussion: 帖子列表
         post: 回复列表
         notification: 通知
+        like: 点赞
+        typing: 输入
       websocket:
         title: Websocket
         desc: Websocket服务器设置
@@ -43,3 +45,8 @@ xypp-websocket-notification:
       title: "新的讨论贴"
       auto_refresh: "30秒后自动刷新"
       list_length: "展示的新贴列表长度"
+    typing:
+      title: "正在输入提示"
+      no_type_tip: "不显示我的输入提示"
+      and_more: "等{rest}人"
+      is_typing: " 正在输入..."

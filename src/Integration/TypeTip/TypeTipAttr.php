@@ -1,6 +1,6 @@
 <?php
 
-namespace Xypp\WsNotification\Integration;
+namespace Xypp\WsNotification\Integration\TypeTip;
 
 use Flarum\Settings\SettingsRepositoryInterface;
 
@@ -13,6 +13,6 @@ class TypeTipAttr
     }
     public function __invoke($serializer, $model, $attributes)
     {
-        return $this->settings->get('xypp.ws_notification.function.type');
+        return $this->settings->get('xypp.ws_notification.function.type')??true;
     }
 }

@@ -49,8 +49,4 @@ return array_merge([
         ->default("xypp.ws_notification.internal.cert", "")
         ->default("xypp.ws_notification.internal.pk", "")
         ->default("xypp.ws_notification.internal.self-signed", false),
-    (new Extend\User())
-        ->registerPreference("xyppWsnFloaterPosition", null, "center")
-        ->registerPreference("xyppWsnNewDiscussionAutoRefresh", null, false)
-        ->registerPreference("xyppWsnNewDiscussionListLen", null, 5)
 ], require (__DIR__ . "/src/Integration/IntegrationExtend.php"));

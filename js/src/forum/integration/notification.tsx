@@ -6,11 +6,15 @@ import { extend } from "flarum/common/extend";
 import SettingsPage from "flarum/forum/components/SettingsPage";
 import FieldSet from "flarum/common/components/FieldSet"
 import Select from "flarum/common/components/Select";
+import WrappedFlagNotification from "./components/WrappedFlagNotification";
 export function initNotification() {
   let notifications: { time: number, first: boolean, notification: any }[] = [];
-  addSubscribeCb('websocket', (items) => {
-    if (app.session.user)
+  addSubscribeCb('notification', (items) => {
+    if (app.session?.user)
       items.add("notification", new ModelPath().add("notification", app.session.user.id()));
+    if (app.session?.user?.isAdmin()) {
+      items.add("flag", new ModelPath().add("flag"));
+    }
   });
   addMessageCb('notification', (path, data) => {
     const model = app.store.pushPayload(data);
@@ -21,6 +25,23 @@ export function initNotification() {
         unreadNotificationCount: app.session.user.unreadNotificationCount() ?? 0 + 1,
         newNotificationCount: app.session.user.newNotificationCount() ?? 0 + 1,
       });
+    m.redraw();
+    setTimeout(() => {
+      obj.first = true;
+      m.redraw();
+    }, 100);
+  });
+  addMessageCb('flag', (path, data) => {
+    const model = app.store.pushPayload(data);
+    const notification = {
+      data: { attributes: { contentType: "wrappedFlag", flag: model } }
+    }
+    const obj = { time: 8, first: false, notification };
+    notifications.unshift(obj);
+    if (app.flags?.cache && Array.isArray(app.flags.cache)) {
+      app.flags.cache.unshift(model);
+    }
+    (app.forum.data.attributes as any).flagCount++;
     m.redraw();
     setTimeout(() => {
       obj.first = true;
@@ -76,4 +97,6 @@ export function initNotification() {
       </FieldSet>
     );
   })
+
+  app.notificationComponents.wrappedFlag = WrappedFlagNotification as any;
 }

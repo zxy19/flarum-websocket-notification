@@ -48,6 +48,16 @@ class ModelPath implements \Stringable
         ];
         return $this;
     }
+    public function remove(string $type)
+    {
+        for ($i = count($this->path) - 1; $i >= 0; $i--) {
+            if ($this->path[$i]["name"] == $type) {
+                array_splice($this->path, $i, 1);
+                break;
+            }
+        }
+        return $this;
+    }
 
     public function get(?string $type = null)
     {

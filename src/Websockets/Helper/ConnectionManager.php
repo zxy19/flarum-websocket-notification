@@ -10,6 +10,7 @@ use Websocket;
 
 class ConnectionManager
 {
+    const RETRY_CNT = 3;
     protected array $connections = [];
     protected array $id2user_id = [];
     protected array $id2user_obj = [];
@@ -75,7 +76,17 @@ class ConnectionManager
         foreach ($ids as $id) {
             $connection = $this->get($id);
             if ($connection) {
-                $connection->send(new WebSocket\Message\Text($data));
+                for ($i = 0; $i < self::RETRY_CNT; $i++) {
+                    try {
+                        $connection->send(new WebSocket\Message\Text($data));
+                        break;
+                    } catch (\Exception $e) {
+                        if ($i == self::RETRY_CNT - 1) {
+                            throw $e;
+                        }
+                        continue;
+                    }
+                }
             }
         }
     }

@@ -70,12 +70,12 @@ export function initDiscussionList() {
         WebsocketHelper.getInstance().setContext({
             discussionList: true
         }).reSubscribe();
-    })
+    });
     extend(DiscussionList.prototype, "onbeforeremove", () => {
         WebsocketHelper.getInstance().setContext({
             discussionList: null
         }).reSubscribe();
-    })
+    });
 
 
     extend(DiscussionPage.prototype, "show", function (this: DiscussionPage, r: any, discussion: Discussion) {

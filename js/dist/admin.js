@@ -32,7 +32,7 @@ var adminPage = /*#__PURE__*/function (_ExtensionPage) {
     _this = _ExtensionPage.call.apply(_ExtensionPage, [this].concat(args)) || this;
     _this.WS_KEYS = ["port", "address", "cert", "pk", "self-signed"];
     _this.WS_TYPES = ["websocket", "internal"];
-    _this.WS_FUNCTIONS = ["discussion", "post", "notification", "like", "type"];
+    _this.WS_FUNCTIONS = ["discussion", "post", "notification", "like", "typing"];
     return _this;
   }
   (0,_babel_runtime_helpers_esm_inheritsLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(adminPage, _ExtensionPage);
@@ -149,7 +149,7 @@ var ModelPath = /*#__PURE__*/function () {
   _proto.toString = function toString() {
     return this.nodes.map(function (n) {
       return n.id ? n.name + "[" + n.id + "]" : n.name;
-    }).join('.');
+    }).join('.') + (this.data ? "||" + JSON.stringify(this.data) : "");
   };
   _proto.add = function add(name, id) {
     this.nodes.push({
@@ -168,8 +168,21 @@ var ModelPath = /*#__PURE__*/function () {
     var node = this.get(name);
     return node && (node.id || null);
   };
+  _proto.remove = function remove(name) {
+    var index = this.nodes.findIndex(function (n) {
+      return n.name === name;
+    });
+    if (index >= 0) {
+      this.nodes.splice(index, 1);
+    }
+    return this;
+  };
   _proto.getData = function getData() {
     return this.data;
+  };
+  _proto.setData = function setData(data) {
+    this.data = data;
+    return this;
   };
   return ModelPath;
 }();

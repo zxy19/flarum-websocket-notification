@@ -56,6 +56,17 @@ class StateManager
             $this->user_states[$user_id] = [];
         }
     }
+    public function releaseState(int $user_id, ModelPath $path)
+    {
+        $noDataPath = $path->noDataPathStr();
+        if (isset($this->states[$user_id]) && isset($this->states[$user_id][$noDataPath])) {
+            unset($this->states[$user_id][$noDataPath]);
+        }
+        if (isset($this->user_states[$user_id]) && isset($this->user_states[$user_id][$noDataPath])) {
+            $this->user_states[$user_id][$noDataPath]->delete();
+            unset($this->user_states[$user_id][$noDataPath]);
+        }
+    }
     public function getDisconnectReleased(int $user_id)
     {
         /**

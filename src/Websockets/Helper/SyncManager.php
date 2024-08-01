@@ -57,16 +57,28 @@ class SyncManager
         if (empty($ids)) {
             return;
         }
-        $from_id = $path->getId("state");
+        $type = $this->helper->getDispatchType($path->getName());
+        $model = null;
+        if (!$type) {
+            $type = $this->helper->getDispatchType("state");
+        }
+        $model = $type->getModel($path);
         $idGrped = $this->connectionManager->groupIdByUser($ids);
         foreach ($idGrped as $user_id => $ids) {
-            if ($user_id == $from_id)
-                continue;
-            $this->connectionManager->broadcast($ids, json_encode([
-                "type" => "sync",
-                "path" => strval($path),
-                "data" => ["state" => true]
-            ]));
+            if ($type) {
+                $type->deliver(
+                    $user_id,
+                    $path,
+                    $model,
+                    function ($attr) use ($ids, $path) {
+                        $this->connectionManager->broadcast($ids, json_encode([
+                            "type" => "sync",
+                            "path" => strval($path),
+                            "data" => $attr ?? ["state" => true]
+                        ]));
+                    }
+                );
+            }
         }
     }
 
@@ -76,14 +88,11 @@ class SyncManager
         if (empty($ids)) {
             return;
         }
-        $idGrped = $this->connectionManager->groupIdByUser($ids);
-        foreach ($idGrped as $_ => $ids) {
-            $this->connectionManager->broadcast($ids, json_encode([
-                "type" => "sync",
-                "path" => strval($path),
-                "data" => ["state" => false]
-            ]));
 
-        }
+        $this->connectionManager->broadcast($ids, json_encode([
+            "type" => "sync",
+            "path" => strval($path),
+            "data" => ["state" => false]
+        ]));
     }
 }

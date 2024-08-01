@@ -80,17 +80,7 @@ class MainWebsocket
                 $this->message($server, $connection, $message);
             })
             ->onClose(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
-                $id = $connection->getMeta('id');
-                $user_id = $this->connectionManager->user($id);
-                if ($user_id) {
-                    $releases = $this->stateManager->getDisconnectReleased($user_id);
-                    foreach ($releases as $path) {
-                        $this->syncManager->performReleasing($path);
-                    }
-                }
-                $this->subscribeManager->unsubscribe($id);
-                $this->connectionManager->remove($id);
-                $this->commandContext->info("Connection closed: {$connection->getMeta('id')}");
+                $this->close($connection);
             })
             ->onConnect(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
                 $id = $this->connectionManager->add($connection, $connection->getHandshakeRequest());
@@ -146,12 +136,36 @@ class MainWebsocket
                 $userId = $this->connectionManager->user($id);
                 if (!$userId || $userId != $path->getId("state"))
                     return;
-                $this->stateManager->setState(new ModelPath($data->path));
-                $this->syncManager->performSyncState($path);
-                $this->commandContext->info("State({$id}):{$path}");
+                if ($path->get("release")) {
+                    $path->remove("release");
+                    $this->stateManager->releaseState($userId, $path);
+                    $this->syncManager->performReleasing($path);
+                    $this->commandContext->info("Release({$id}):{$path}");
+                } else {
+                    $this->stateManager->setState(new ModelPath($data->path));
+                    $this->syncManager->performSyncState($path);
+                    $this->commandContext->info("State({$id}):{$path}");
+                }
             }
         } catch (\Exception $e) {
             $this->commandContext->warn($e->getMessage());
+            $connection->close();
+            $this->close($connection);
         }
+    }
+
+    protected function close(WebSocket\Connection $connection)
+    {
+        $id = $connection->getMeta('id');
+        $user_id = $this->connectionManager->user($id);
+        if ($user_id) {
+            $releases = $this->stateManager->getDisconnectReleased($user_id);
+            foreach ($releases as $path) {
+                $this->syncManager->performReleasing($path);
+            }
+        }
+        $this->subscribeManager->unsubscribe($id);
+        $this->connectionManager->remove($id);
+        $this->commandContext->info("Connection closed: {$connection->getMeta('id')}");
     }
 }

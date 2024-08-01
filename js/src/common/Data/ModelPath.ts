@@ -26,7 +26,7 @@ export class ModelPath {
         }
     }
     toString(): string {
-        return this.nodes.map(n => n.id ? `${n.name}[${n.id}]` : n.name).join('.');
+        return this.nodes.map(n => n.id ? `${n.name}[${n.id}]` : n.name).join('.') + (this.data ? `||${JSON.stringify(this.data)}` : "");
     }
     add(name: string, id?: string): this {
         this.nodes.push({ name, id });
@@ -40,7 +40,19 @@ export class ModelPath {
         const node = this.get(name);
         return node && (node.id || null);
     }
+    remove(name: string): this {
+        const index = this.nodes.findIndex(n => n.name === name);
+        if (index >= 0) {
+            this.nodes.splice(index, 1);
+        }
+        return this;
+    }
     getData(): any {
         return this.data;
     }
+    setData(data: any): this {
+        this.data = data;
+        return this;
+    }
+
 }
