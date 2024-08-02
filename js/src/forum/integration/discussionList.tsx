@@ -15,7 +15,14 @@ import Button from "flarum/common/components/Button";
 export function initDiscussionList() {
     addSubscribeCb("discussion", (items: ItemList<ModelPath>, context: Record<string, any>) => {
         if (context.discussionList) {
-            items.add("discussionList", new ModelPath().add("discussion"));
+            if (context.discussionListTag) {
+                const tag = app.store.getBy<any>("tags", "slug", context.discussionListTag);
+                if (tag) {
+                    items.add("discussionList", new ModelPath().add("tag", tag.id()).add("discussion"));
+                }
+            } else {
+                items.add("discussionList", new ModelPath().add("discussion"));
+            }
         }
     })
     let comingDiscussions: {
@@ -29,6 +36,7 @@ export function initDiscussionList() {
         m.redraw();
     }
     function addOne(id: string, title: string, post: number) {
+        if ((app.current?.data as any)?.discussion?.id() == id) return;
         let baseCount = 0;
         for (let i = 0; i < comingDiscussions.length; i++) {
             if (comingDiscussions[i].id == id) {
@@ -66,8 +74,10 @@ export function initDiscussionList() {
             }));
         }
     })
-    extend(DiscussionList.prototype, "oncreate", () => {
+    extend(DiscussionList.prototype, "oncreate", function (this: DiscussionList) {
+        const tag = (this.attrs as any).state.params.tags;
         WebsocketHelper.getInstance().setContext({
+            discussionListTag: tag,
             discussionList: true
         }).reSubscribe();
     });

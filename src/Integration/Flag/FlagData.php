@@ -9,7 +9,7 @@ use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Util\RequestForSerializer;
 
 
-class Flag extends AbstractDataDispatchType
+class FlagData extends AbstractDataDispatchType
 {
     private $controller;
     public function __construct(SingleFlagController $controller)

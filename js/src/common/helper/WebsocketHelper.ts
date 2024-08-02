@@ -3,10 +3,12 @@ import ItemList from "flarum/common/utils/ItemList";
 import ForumApplication from "flarum/forum/ForumApplication";
 import { ModelPath } from "../Data/ModelPath";
 import WebsocketAccessToken from "../model/WebsocketAccessToken";
+export type STATUS = "online" | "offline" | "connecting";
 
 export class WebsocketHelper {
     app?: ForumApplication | AdminApplication;
     ws?: WebSocket
+    statusChangeCb?: (status: STATUS) => void;
     context: Record<string, any> = {};
     lastSubscribes: string[] = [];
     pingInterval?: any;
@@ -30,6 +32,7 @@ export class WebsocketHelper {
                     this.ws = undefined;
                 };
             }
+            if (this.statusChangeCb) this.statusChangeCb("connecting");
             const item = await this.app.store.createRecord<WebsocketAccessToken>("websocket-access-token").save({});
             const ws = new WebSocket(item.url());
             this.ws = ws;
@@ -37,15 +40,18 @@ export class WebsocketHelper {
                 this.closeHandler();
                 if (this.pingInterval)
                     clearInterval(this.pingInterval);
+                if (this.statusChangeCb) this.statusChangeCb("offline");
             }
             ws.onerror = () => {
                 if (this.pingInterval)
                     clearInterval(this.pingInterval);
+                if (this.statusChangeCb) this.statusChangeCb("offline");
             }
             ws.onopen = () => {
                 this.lastSubscribes = [];
                 this.reSubscribe();
                 this.pingInterval = setInterval(this.ping.bind(this), 30000);
+                if (this.statusChangeCb) this.statusChangeCb("online");
             }
             ws.onmessage = (e) => {
                 const data = JSON.parse(e.data);
@@ -95,6 +101,9 @@ export class WebsocketHelper {
         if (this.ws) {
             this.ws.send(JSON.stringify(data));
         }
+    }
+    onStatusChange(cb: (status: STATUS) => void) {
+        this.statusChangeCb = cb;
     }
     protected ping() {
         this.send({

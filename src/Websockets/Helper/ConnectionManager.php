@@ -2,6 +2,7 @@
 
 namespace Xypp\WsNotification\Websockets\Helper;
 
+use Flarum\User\Guest;
 use Flarum\User\User;
 use Psr\Http\Message\ServerRequestInterface;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
@@ -64,9 +65,9 @@ class ConnectionManager
     {
         return $this->id2user_id[$id] ?? null;
     }
-    public function userObj($id): ?User
+    public function userObj($id): User
     {
-        return $this->id2user_obj[$id] ?? null;
+        return $this->id2user_obj[$id] ?? new Guest();
     }
     public function broadcast(?array $ids, string $data)
     {

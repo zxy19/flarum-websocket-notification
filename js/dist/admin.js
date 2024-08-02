@@ -235,6 +235,7 @@ var WebsocketHelper = /*#__PURE__*/function () {
   function WebsocketHelper() {
     this.app = void 0;
     this.ws = void 0;
+    this.statusChangeCb = void 0;
     this.context = {};
     this.lastSubscribes = [];
     this.pingInterval = void 0;
@@ -257,7 +258,7 @@ var WebsocketHelper = /*#__PURE__*/function () {
         while (1) switch (_context.prev = _context.next) {
           case 0:
             if (!this.app) {
-              _context.next = 11;
+              _context.next = 12;
               break;
             }
             if (this.ws) {
@@ -269,29 +270,33 @@ var WebsocketHelper = /*#__PURE__*/function () {
               }
               ;
             }
-            _context.next = 4;
+            if (this.statusChangeCb) this.statusChangeCb("connecting");
+            _context.next = 5;
             return this.app.store.createRecord("websocket-access-token").save({});
-          case 4:
+          case 5:
             item = _context.sent;
             ws = new WebSocket(item.url());
             this.ws = ws;
             ws.onclose = function () {
               _this.closeHandler();
               if (_this.pingInterval) clearInterval(_this.pingInterval);
+              if (_this.statusChangeCb) _this.statusChangeCb("offline");
             };
             ws.onerror = function () {
               if (_this.pingInterval) clearInterval(_this.pingInterval);
+              if (_this.statusChangeCb) _this.statusChangeCb("offline");
             };
             ws.onopen = function () {
               _this.lastSubscribes = [];
               _this.reSubscribe();
               _this.pingInterval = setInterval(_this.ping.bind(_this), 30000);
+              if (_this.statusChangeCb) _this.statusChangeCb("online");
             };
             ws.onmessage = function (e) {
               var data = JSON.parse(e.data);
               if (data.type === "sync") _this.messageHandler(new _Data_ModelPath__WEBPACK_IMPORTED_MODULE_3__.ModelPath(data.path), data.data);
             };
-          case 11:
+          case 12:
           case "end":
             return _context.stop();
         }
@@ -347,6 +352,9 @@ var WebsocketHelper = /*#__PURE__*/function () {
     if (this.ws) {
       this.ws.send(JSON.stringify(data));
     }
+  };
+  _proto.onStatusChange = function onStatusChange(cb) {
+    this.statusChangeCb = cb;
   };
   _proto.ping = function ping() {
     this.send({

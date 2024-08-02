@@ -36,7 +36,7 @@ export function initTypingTip() {
         }
     });
     addSubscribeCb("typing", (items, context) => {
-        if(!app.forum.attribute("xyppWsnTypeTip")){
+        if (!app.forum.attribute("xyppWsnTypeTip")) {
             return;
         }
         if (context.discussion) {
@@ -44,7 +44,7 @@ export function initTypingTip() {
         }
     });
     extend(ComposerBody.prototype, "oninit", function (this: ComposerBody, val: any) {
-        if(!app.forum.attribute("xyppWsnTypeTip")){
+        if (!app.forum.attribute("xyppWsnTypeTip")) {
             return;
         }
         if ((app.session?.user?.preferences() || {})["xyppWsnNoTypeTip"]) {
@@ -57,9 +57,16 @@ export function initTypingTip() {
                     .add("discussion", (this.attrs as any).discussion.id())
                     .add("typing")
                 );
+        if ((this.attrs as any).post)
+            WebsocketHelper.getInstance()
+                .state(new ModelPath()
+                    .add("state", app.session?.user?.id())
+                    .add("discussion", (this.attrs as any).post.discussion().id())
+                    .add("typing")
+                );
     });
     extend(ComposerBody.prototype, "onbeforeremove", function (this: ComposerBody, r: any) {
-        if(!app.forum.attribute("xyppWsnTypeTip")){
+        if (!app.forum.attribute("xyppWsnTypeTip")) {
             return;
         }
         if ((app.session?.user?.preferences() || {})["xyppWsnNoTypeTip"]) {
@@ -71,6 +78,14 @@ export function initTypingTip() {
                     .add("state", app.session?.user?.id())
                     .add("release")
                     .add("discussion", (this.attrs as any).discussion.id())
+                    .add("typing")
+                );
+        if ((this.attrs as any).post)
+            WebsocketHelper.getInstance()
+                .state(new ModelPath()
+                    .add("state", app.session?.user?.id())
+                    .add("release")
+                    .add("discussion", (this.attrs as any).post.discussion().id())
                     .add("typing")
                 );
     });

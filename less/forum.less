@@ -116,3 +116,27 @@
         }
     }
 }
+
+.connectionIndicator.no-connection {
+    display: none;
+}
+
+.connectionIndicator {
+    @media @tablet-up {
+        top: var(--header-height);
+    }
+
+    top:var(--header-height-phone);
+    position: fixed;
+    right: 0;
+    border-bottom-left-radius: var(--border-radius);
+    height:16px;
+    width:16px;
+
+    .connectionIndicator-icon.offline{
+        color: #ffa000;
+    }
+    .connectionIndicator-icon.online{
+        color: #4caf50;
+    }
+}

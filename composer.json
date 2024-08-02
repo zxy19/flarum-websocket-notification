@@ -55,6 +55,7 @@
     "prefer-stable": true,
     "require-dev": {
         "flarum/likes": "^1.8",
-        "flarum/flags": "^1.8"
+        "flarum/flags": "^1.8",
+        "flarum/tags": "^1.8"
     }
 }
