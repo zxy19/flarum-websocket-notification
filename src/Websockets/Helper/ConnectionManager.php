@@ -15,7 +15,6 @@ class ConnectionManager
     protected array $connections = [];
     protected array $id2user_id = [];
     protected array $id2user_obj = [];
-    protected array $user_id2connections = [];
     protected int $id = 0;
     protected DataDispatchHelper $helper;
     public function __construct(DataDispatchHelper $helper)
@@ -83,6 +82,7 @@ class ConnectionManager
                         break;
                     } catch (\Exception $e) {
                         if ($i == self::RETRY_CNT - 1) {
+                            echo "broadcast error:  id: $id\r\n";
                             throw $e;
                         }
                         continue;

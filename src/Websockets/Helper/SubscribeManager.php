@@ -64,9 +64,12 @@ class SubscribeManager
                 $currentObj = &$currentObj[$p];
             }
             if (isset($currentObj['_ids'])) {
-                $currentObj['_ids'] = array_filter($currentObj['_ids'], function ($v) use ($id) {
-                    return $v != $id;
-                });
+                for ($i = 0; $i < count($currentObj['_ids']); $i++) {
+                    if ($currentObj['_ids'][$i] == $id) {
+                        array_splice($currentObj['_ids'], $i, 1);
+                        break;
+                    }
+                }
             }
         }
         $this->user2subPath[$id] = [];
