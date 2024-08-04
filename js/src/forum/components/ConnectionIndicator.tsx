@@ -16,11 +16,20 @@ export default class ConnectionIndicator extends Component {
     getContent() {
         switch (this.currentStatus) {
             case "online":
-                return <span className="connectionIndicator-icon online"><i className="far fa-circle"></i></span>;
+                return <span className="connectionIndicator-icon online">
+                    <i className="far fa-circle"></i>
+                    {app.translator.trans("xypp-websocket-notification.forum.connection.connected")}
+                </span>;
             case "offline":
-                return <span className="connectionIndicator-icon offline"><i className="fas fa-times"></i></span>;
+                return <span className="connectionIndicator-icon offline">
+                    <i className="fas fa-times"></i>
+                    {app.translator.trans("xypp-websocket-notification.forum.connection.disconnected")}
+                </span>;
             case "connecting":
-                return <span className="connectionIndicator-icon connecting"><i className="fas fa-wifi"></i></span>;
+                return <span className="connectionIndicator-icon connecting">
+                    <i className="fas fa-wifi"></i>
+                    {app.translator.trans("xypp-websocket-notification.forum.connection.connecting")}
+                </span>;
         }
     }
     status(status: STATUS) {

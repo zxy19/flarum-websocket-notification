@@ -67,7 +67,6 @@ class MainWebsocket
                 $write = $oob = [];
                 stream_select($read, $write, $oob, 5);
             }
-
             $this->server->loop($read);
             $this->internal->loop($read);
             gc_collect_cycles();

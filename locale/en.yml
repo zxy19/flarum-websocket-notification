@@ -1,4 +1,6 @@
 xypp-websocket-notification:
+  api:
+    not-running: "Websocket server is not running."
   admin:
     settings:
       common:
@@ -33,6 +35,10 @@ xypp-websocket-notification:
         pk: The path to the private key file.
         self-signed: Whether the websocket server is using a self-signed certificate.
   forum:
+    connection:
+      connecting: "Connecting"
+      connected: "Connected"
+      disconnected: "Disconnected"
     close_notification_floater: " Close"
     notification_floater:
       title: "Notification Floater"

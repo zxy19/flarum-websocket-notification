@@ -5,6 +5,8 @@ import { ModelPath } from "../Data/ModelPath";
 import WebsocketAccessToken from "../model/WebsocketAccessToken";
 export type STATUS = "online" | "offline" | "connecting";
 
+const RETRY_INTERVALS = [100, 2000, 5000, 10000, 60000, 120000];
+
 export class WebsocketHelper {
     app?: ForumApplication | AdminApplication;
     ws?: WebSocket
@@ -12,6 +14,8 @@ export class WebsocketHelper {
     context: Record<string, any> = {};
     lastSubscribes: string[] = [];
     pingInterval?: any;
+    nextRetry = 0;
+    inRetryStatus = false;
     static instance?: WebsocketHelper;
     public static getInstance(): WebsocketHelper {
         if (!WebsocketHelper.instance) {
@@ -33,25 +37,34 @@ export class WebsocketHelper {
                 };
             }
             if (this.statusChangeCb) this.statusChangeCb("connecting");
-            const item = await this.app.store.createRecord<WebsocketAccessToken>("websocket-access-token").save({});
+            let item: WebsocketAccessToken | null = null;
+            try {
+                item = await this.app.store.createRecord<WebsocketAccessToken>("websocket-access-token").save({});
+            } catch (e) {
+                this.retry();
+            }
+            if (!item) {
+                this.retry();
+                return;
+            }
             const ws = new WebSocket(item.url());
             this.ws = ws;
             ws.onclose = () => {
-                this.closeHandler();
+                this.retry();
                 if (this.pingInterval)
                     clearInterval(this.pingInterval);
-                if (this.statusChangeCb) this.statusChangeCb("offline");
             }
             ws.onerror = () => {
+                this.retry();
                 if (this.pingInterval)
                     clearInterval(this.pingInterval);
-                if (this.statusChangeCb) this.statusChangeCb("offline");
             }
             ws.onopen = () => {
                 this.lastSubscribes = [];
                 this.reSubscribe();
                 this.pingInterval = setInterval(this.ping.bind(this), 30000);
                 if (this.statusChangeCb) this.statusChangeCb("online");
+                this.nextRetry = 0;
             }
             ws.onmessage = (e) => {
                 const data = JSON.parse(e.data);
@@ -63,11 +76,6 @@ export class WebsocketHelper {
     messageHandler(path: ModelPath, data: any) {
         // To be implemented in extends
         console.log(`No handler found ${path.toString()}: ${JSON.stringify(data)}`);
-    }
-    closeHandler() {
-        setTimeout(() => {
-            this.start();
-        }, 5000);
     }
     getSubscribes(context: Record<string, any>): ItemList<ModelPath> {
         return new ItemList<ModelPath>();
@@ -104,6 +112,18 @@ export class WebsocketHelper {
     }
     onStatusChange(cb: (status: STATUS) => void) {
         this.statusChangeCb = cb;
+    }
+    retry() {
+        if (this.inRetryStatus) return;
+        this.inRetryStatus = true;
+        if (this.statusChangeCb) this.statusChangeCb("offline");
+        setTimeout(() => {
+            this.inRetryStatus = false;
+            this.start();
+        }, RETRY_INTERVALS[this.nextRetry - 1]);
+        if (this.nextRetry < RETRY_INTERVALS.length) {
+            this.nextRetry += 1;
+        }
     }
     protected ping() {
         this.send({

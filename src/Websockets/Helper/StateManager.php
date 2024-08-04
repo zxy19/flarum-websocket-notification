@@ -28,7 +28,7 @@ class StateManager
             if (!isset($this->states[$user_id])) {
                 $this->states[$user_id] = [];
             }
-            $pathStr = $path->noDataPathStr();
+            $pathStr = strval($path->withoutData());
             if (!isset($this->states[$user_id][$pathStr])) {
                 if (count($this->states[$user_id]) > $this->maxStatesHold)
                     return false;
@@ -58,7 +58,7 @@ class StateManager
     }
     public function releaseState(int $user_id, ModelPath $path)
     {
-        $noDataPath = $path->noDataPathStr();
+        $noDataPath = strval($path->withoutData());
         if (isset($this->states[$user_id]) && isset($this->states[$user_id][$noDataPath])) {
             unset($this->states[$user_id][$noDataPath]);
         }

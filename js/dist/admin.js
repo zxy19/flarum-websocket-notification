@@ -231,6 +231,7 @@ var _WebsocketHelper;
 
 
 
+var RETRY_INTERVALS = [100, 2000, 5000, 10000, 60000, 120000];
 var WebsocketHelper = /*#__PURE__*/function () {
   function WebsocketHelper() {
     this.app = void 0;
@@ -239,6 +240,8 @@ var WebsocketHelper = /*#__PURE__*/function () {
     this.context = {};
     this.lastSubscribes = [];
     this.pingInterval = void 0;
+    this.nextRetry = 0;
+    this.inRetryStatus = false;
   }
   WebsocketHelper.getInstance = function getInstance() {
     if (!WebsocketHelper.instance) {
@@ -258,7 +261,7 @@ var WebsocketHelper = /*#__PURE__*/function () {
         while (1) switch (_context.prev = _context.next) {
           case 0:
             if (!this.app) {
-              _context.next = 12;
+              _context.next = 22;
               break;
             }
             if (this.ws) {
@@ -271,36 +274,52 @@ var WebsocketHelper = /*#__PURE__*/function () {
               ;
             }
             if (this.statusChangeCb) this.statusChangeCb("connecting");
-            _context.next = 5;
+            item = null;
+            _context.prev = 4;
+            _context.next = 7;
             return this.app.store.createRecord("websocket-access-token").save({});
-          case 5:
+          case 7:
             item = _context.sent;
+            _context.next = 13;
+            break;
+          case 10:
+            _context.prev = 10;
+            _context.t0 = _context["catch"](4);
+            this.retry();
+          case 13:
+            if (item) {
+              _context.next = 16;
+              break;
+            }
+            this.retry();
+            return _context.abrupt("return");
+          case 16:
             ws = new WebSocket(item.url());
             this.ws = ws;
             ws.onclose = function () {
-              _this.closeHandler();
+              _this.retry();
               if (_this.pingInterval) clearInterval(_this.pingInterval);
-              if (_this.statusChangeCb) _this.statusChangeCb("offline");
             };
             ws.onerror = function () {
+              _this.retry();
               if (_this.pingInterval) clearInterval(_this.pingInterval);
-              if (_this.statusChangeCb) _this.statusChangeCb("offline");
             };
             ws.onopen = function () {
               _this.lastSubscribes = [];
               _this.reSubscribe();
               _this.pingInterval = setInterval(_this.ping.bind(_this), 30000);
               if (_this.statusChangeCb) _this.statusChangeCb("online");
+              _this.nextRetry = 0;
             };
             ws.onmessage = function (e) {
               var data = JSON.parse(e.data);
               if (data.type === "sync") _this.messageHandler(new _Data_ModelPath__WEBPACK_IMPORTED_MODULE_3__.ModelPath(data.path), data.data);
             };
-          case 12:
+          case 22:
           case "end":
             return _context.stop();
         }
-      }, _callee, this);
+      }, _callee, this, [[4, 10]]);
     }));
     function start() {
       return _start.apply(this, arguments);
@@ -311,19 +330,13 @@ var WebsocketHelper = /*#__PURE__*/function () {
     // To be implemented in extends
     console.log("No handler found " + path.toString() + ": " + JSON.stringify(data));
   };
-  _proto.closeHandler = function closeHandler() {
-    var _this2 = this;
-    setTimeout(function () {
-      _this2.start();
-    }, 5000);
-  };
   _proto.getSubscribes = function getSubscribes(context) {
     return new (flarum_common_utils_ItemList__WEBPACK_IMPORTED_MODULE_2___default())();
   };
   _proto.setContext = function setContext(context) {
-    var _this3 = this;
+    var _this2 = this;
     Object.keys(context).forEach(function (v) {
-      if (context[v] === null && _this3.context[v]) delete _this3.context[v];else _this3.context[v] = context[v];
+      if (context[v] === null && _this2.context[v]) delete _this2.context[v];else _this2.context[v] = context[v];
     });
     return this;
   };
@@ -355,6 +368,19 @@ var WebsocketHelper = /*#__PURE__*/function () {
   };
   _proto.onStatusChange = function onStatusChange(cb) {
     this.statusChangeCb = cb;
+  };
+  _proto.retry = function retry() {
+    var _this3 = this;
+    if (this.inRetryStatus) return;
+    this.inRetryStatus = true;
+    if (this.statusChangeCb) this.statusChangeCb("offline");
+    setTimeout(function () {
+      _this3.inRetryStatus = false;
+      _this3.start();
+    }, RETRY_INTERVALS[this.nextRetry - 1]);
+    if (this.nextRetry < RETRY_INTERVALS.length) {
+      this.nextRetry += 1;
+    }
   };
   _proto.ping = function ping() {
     this.send({

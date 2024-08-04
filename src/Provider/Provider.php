@@ -3,20 +3,39 @@
 namespace Xypp\WsNotification\Provider;
 
 use Flarum\Foundation\AbstractServiceProvider;
+use Illuminate\Contracts\Container\Container;
 use Xypp\WsNotification\Extend\WebsocketDataCollection;
 use Xypp\WsNotification\Helper\Bridge;
 use Xypp\WsNotification\Websockets\Helper\ConnectionManager;
 use Xypp\WsNotification\Websockets\Helper\SubscribeManager;
 use Xypp\WsNotification\Websockets\Helper\StateManager;
 use Xypp\WsNotification\Websockets\Helper\SyncManager;
-
+use Xypp\WsNotification\Integration\Flag\FlagData;
+use Xypp\WsNotification\Integration\Like\LikeData;
+use Xypp\WsNotification\Integration\Post\PostData;
+use Xypp\WsNotification\Integration\Post\TagData;
+use Xypp\WsNotification\Integration\Post\DiscussionData;
+use Xypp\WsNotification\Integration\TypeTip\TypingData;
+use Xypp\WsNotification\Integration\Notification\NotificationData;
+use Xypp\WsNotification\Integration\State;
 
 class Provider extends AbstractServiceProvider
 {
     public function register()
     {
         $this->container->singleton(Bridge::class);
-        $this->container->singleton(WebsocketDataCollection::class);
+        $this->container->singleton(WebsocketDataCollection::class, function (Container $container) {
+            $collection = new WebsocketDataCollection();
+            $collection->add($container->make(State::class));
+            $collection->add($container->make(PostData::class));
+            $collection->add($container->make(NotificationData::class));
+            $collection->add($container->make(DiscussionData::class));
+            $collection->add($container->make(LikeData::class));
+            $collection->add($container->make(TypingData::class));
+            $collection->add($container->make(FlagData::class));
+            $collection->add($container->make(TagData::class));
+            return $collection;
+        });
         $this->container->singleton(ConnectionManager::class);
         $this->container->singleton(SubscribeManager::class);
         $this->container->singleton(StateManager::class);

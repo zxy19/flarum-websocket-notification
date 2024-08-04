@@ -37,7 +37,7 @@ class WebsocketUserState extends AbstractModel
         if (!$id) {
             return;
         }
-        $str = $modelPath->noDataPathStr();
+        $str = strval($modelPath->withoutData());
         $ln = intval(strlen("{$id}[state]."));
         $str = substr($str, $ln);
         $this->data = $modelPath->getData();

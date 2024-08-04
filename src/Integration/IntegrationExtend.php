@@ -5,33 +5,16 @@ use Flarum\Extend\Event;
 use Flarum\Extend\Settings;
 use Flarum\Post\Event\Posted;
 use Flarum\Post\Event\Saving;
-use Xypp\WsNotification\Integration\Flag\FlagData;
 use Xypp\WsNotification\Integration\Flag\FlagEventsListener;
-use Xypp\WsNotification\Integration\Like\LikeData;
 use Xypp\WsNotification\Integration\Like\LikeEventsListener;
-use Xypp\WsNotification\Integration\Post\PostData;
-use Xypp\WsNotification\Integration\Post\TagData;
-use Xypp\WsNotification\Integration\Post\DiscussionData;
 use Xypp\WsNotification\Integration\Post\PostSavingEvent;
 use Xypp\WsNotification\Integration\Post\PostStartEvent;
-use Xypp\WsNotification\Integration\Notification\NotificationData;
 use Xypp\WsNotification\Integration\Notification\NotificationDriver;
-use Xypp\WsNotification\Integration\TypeTip\TypingData;
 use Xypp\WsNotification\Integration\TypeTip\TypeTipAttr;
 use Xypp\WsNotification\Integration\TypeTip\TypeTipDiscussionSerializer;
-use Xypp\WsNotification\Integration\State;
 use Flarum\Extend;
 
 $ret = [
-    (new \Xypp\WsNotification\Extend\Websocket())
-        ->type(State::class)
-        ->type(PostData::class)
-        ->type(NotificationData::class)
-        ->type(DiscussionData::class)
-        ->type(LikeData::class)
-        ->type(TypingData::class)
-        ->type(FlagData::class)
-        ->type(TagData::class),
     (new Extend\Notification())
         ->driver("ws-notification", NotificationDriver::class),
     (new Event())

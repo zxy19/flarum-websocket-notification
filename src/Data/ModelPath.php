@@ -36,6 +36,18 @@ class ModelPath implements \Stringable
         }
 
     }
+
+    public function withoutData()
+    {
+        $ret = new ModelPath();
+        $ret->path = [];
+        $this->each(function ($name, $id) use (&$ret) {
+            $ret->addWithId($name["name"], $name["id"]);
+        });
+        $ret->data = null;
+        return $ret;
+    }
+
     public function add(string $path): ModelPath
     {
         return $this->addWithId($path, null);
@@ -108,10 +120,6 @@ class ModelPath implements \Stringable
         }
         return $ret;
     }
-    public function isInPath(string $path): bool
-    {
-        return !!$this->get($path);
-    }
 
     public function each(callable $callback): void
     {
@@ -133,20 +141,6 @@ class ModelPath implements \Stringable
         }
         if ($this->data) {
             $ret .= "||" . json_encode($this->data);
-        }
-        return $ret;
-    }
-    public function noDataPathStr(): string
-    {
-        $ret = "";
-        for ($i = 0; $i < count($this->path); $i++) {
-            if ($i > 0) {
-                $ret .= ".";
-            }
-            $ret .= $this->path[$i]["name"];
-            if ($this->path[$i]["id"]) {
-                $ret .= "[" . $this->path[$i]["id"] . "]";
-            }
         }
         return $ret;
     }

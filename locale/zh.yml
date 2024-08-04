@@ -1,4 +1,6 @@
 xypp-websocket-notification:
+  api:
+    not-running: "Websocket服务未运行"
   admin:
     settings:
       common:
@@ -33,6 +35,10 @@ xypp-websocket-notification:
         pk: 私钥路径
         self-signed: 是否使用自签名证书
   forum:
+    connection:
+      connecting: "正在连接"
+      connected: "已连接"
+      disconnected: "未连接"
     close_notification_floater: " 关闭"
     notification_floater:
       title: "消息浮窗"
