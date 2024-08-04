@@ -42,7 +42,7 @@ class ModelPath implements \Stringable
         $ret = new ModelPath();
         $ret->path = [];
         $this->each(function ($name, $id) use (&$ret) {
-            $ret->addWithId($name["name"], $name["id"]);
+            $ret->addWithId($name, $id);
         });
         $ret->data = null;
         return $ret;

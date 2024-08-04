@@ -25,15 +25,15 @@ class Provider extends AbstractServiceProvider
     {
         $this->container->singleton(Bridge::class);
         $this->container->singleton(WebsocketDataCollection::class, function (Container $container) {
-            $collection = new WebsocketDataCollection();
-            $collection->add($container->make(State::class));
-            $collection->add($container->make(PostData::class));
-            $collection->add($container->make(NotificationData::class));
-            $collection->add($container->make(DiscussionData::class));
-            $collection->add($container->make(LikeData::class));
-            $collection->add($container->make(TypingData::class));
-            $collection->add($container->make(FlagData::class));
-            $collection->add($container->make(TagData::class));
+            $collection = new WebsocketDataCollection($container);
+            $collection->add(State::class);
+            $collection->add(PostData::class);
+            $collection->add(NotificationData::class);
+            $collection->add(DiscussionData::class);
+            $collection->add(LikeData::class);
+            $collection->add(TypingData::class);
+            $collection->add(FlagData::class);
+            $collection->add(TagData::class);
             return $collection;
         });
         $this->container->singleton(ConnectionManager::class);

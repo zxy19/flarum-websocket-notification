@@ -29,7 +29,7 @@ class Websocket implements ExtenderInterface
             WebsocketDataCollection::class,
             function (WebsocketDataCollection $collection, Container $container) {
                 foreach ($this->types as $type) {
-                    $collection->add($container->make($type));
+                    $collection->add($type);
                 }
                 foreach ($this->connectCb as $cb) {
                     $collection->addConnectCb(ContainerUtil::wrapCallback($cb, $container));
