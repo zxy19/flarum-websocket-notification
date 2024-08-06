@@ -325,7 +325,7 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
             try {
                 // Clear closed connections
                 $this->detachUnconnected();
-                if (is_null($this->streams)) {
+                if (is_null($this->streams) || get_resource_type($this->server) === "Unknown") {
                     $this->stop();
                     return [];
                 }

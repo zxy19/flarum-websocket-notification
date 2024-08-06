@@ -60,7 +60,15 @@ class MainWebsocket
         $this->commandContext->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
         $tmp_servers = [];
         try {
-            while ($this->server->isRunning() || $this->internal->isRunning()) {
+            while (true) {
+                if (!$this->server->isRunning()) {
+                    $this->commandContext->warn("Server is not running, restarting...");
+                    $this->server->start();
+                }
+                if (!$this->internal->isRunning()) {
+                    $this->commandContext->warn("Internal server is not running, restarting...");
+                    $this->internal->start();
+                }
                 $read = [];
                 $tmp_servers = [];
                 if ($this->server->isRunning())
