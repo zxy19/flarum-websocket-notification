@@ -58,12 +58,20 @@ class MainWebsocket
 
         $this->commandContext->info("Starting server on {$config->address}:{$config->port}");
         $this->commandContext->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
-
+        $tmp_servers = [];
         try {
             while ($this->server->isRunning() || $this->internal->isRunning()) {
                 $read = [];
-                $read = array_merge($read, $this->server->collect());
-                $read = array_merge($read, $this->internal->collect());
+                $tmp_servers = [];
+                if ($this->server->isRunning())
+                    $read = array_merge($read, $this->server->collect());
+                if ($this->internal->isRunning())
+                    $read = array_merge($read, $this->internal->collect());
+                foreach ($read as $k => $t) {
+                    if (strpos($k, "@server")) {
+                        $tmp_servers[] = $k;
+                    }
+                }
                 if (!empty($read)) {
                     $write = $oob = [];
                     stream_select($read, $write, $oob, 5);
@@ -73,6 +81,7 @@ class MainWebsocket
                 gc_collect_cycles();
             }
         } catch (\Throwable $e) {
+            var_dump($tmp_servers);
             $this->commandContext->warn($e->getTraceAsString());
             $this->commandContext->error($e->getMessage());
         }
