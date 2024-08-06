@@ -90,6 +90,9 @@ class MainWebsocket
             }
         } catch (\Throwable $e) {
             var_dump($tmp_servers);
+            foreach ($tmp_servers as $server) {
+                echo "RES_type" . get_resource_type($server) . "\r\n";
+            }
             $this->commandContext->warn($e->getTraceAsString());
             $this->commandContext->error($e->getMessage());
         }
