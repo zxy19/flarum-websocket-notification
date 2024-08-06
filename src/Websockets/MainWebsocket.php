@@ -70,20 +70,31 @@ class MainWebsocket
                     $this->internal->start();
                 }
                 $read = [];
-                $tmp_servers = [];
                 if ($this->server->isRunning())
                     $read = array_merge($read, $this->server->collect());
                 if ($this->internal->isRunning())
                     $read = array_merge($read, $this->internal->collect());
-                foreach ($read as $k => $t) {
-                    if (strpos($k, "@server")) {
-                        $tmp_servers[] = $t;
-                    }
-                }
                 if (!empty($read)) {
                     $write = $oob = [];
                     stream_select($read, $write, $oob, 5);
                 }
+
+                $tmp_servers = [];
+                $problem = false;
+                foreach ($read as $k => $t) {
+                    if (strpos($k, "@server")) {
+                        if (get_resource_type($t) == "Unknown") {
+                            $problem = true;
+                            break;
+                        }
+                        $tmp_servers[] = $t;
+                    }
+                }
+                if ($problem) {
+                    $this->commandContext->warn("Problem occurred, Skip");
+                    continue;
+                }
+
                 $this->server->loop($read);
                 $this->internal->loop($read);
                 gc_collect_cycles();
