@@ -59,25 +59,22 @@ class MainWebsocket
         $this->commandContext->info("Starting server on {$config->address}:{$config->port}");
         $this->commandContext->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
 
-        while (true) {
-            if (!$this->server->isRunning()) {
-                $this->server->start();
-                $this->commandContext->info("Server died. Restarting...");
+        try {
+            while ($this->server->isRunning() || $this->internal->isRunning()) {
+                $read = [];
+                $read = array_merge($read, $this->server->collect());
+                $read = array_merge($read, $this->internal->collect());
+                if (!empty($read)) {
+                    $write = $oob = [];
+                    stream_select($read, $write, $oob, 5);
+                }
+                $this->server->loop($read);
+                $this->internal->loop($read);
+                gc_collect_cycles();
             }
-            if (!$this->internal->isRunning()) {
-                $this->internal->start();
-                $this->commandContext->info("Internal Server died. Restarting...");
-            }
-            $read = [];
-            $read = array_merge($read, $this->server->collect());
-            $read = array_merge($read, $this->internal->collect());
-            if (!empty($read)) {
-                $write = $oob = [];
-                stream_select($read, $write, $oob, 5);
-            }
-            $this->server->loop($read);
-            $this->internal->loop($read);
-            gc_collect_cycles();
+        } catch (\Throwable $e) {
+            $this->commandContext->warn($e->getTraceAsString());
+            $this->commandContext->error($e->getMessage());
         }
     }
     public function registerServerCallbacks(WebsocketServerSplit $server)
