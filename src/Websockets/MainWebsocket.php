@@ -69,7 +69,7 @@ class MainWebsocket
                     $read = array_merge($read, $this->internal->collect());
                 foreach ($read as $k => $t) {
                     if (strpos($k, "@server")) {
-                        $tmp_servers[] = $k;
+                        $tmp_servers[] = $t;
                     }
                 }
                 if (!empty($read)) {
