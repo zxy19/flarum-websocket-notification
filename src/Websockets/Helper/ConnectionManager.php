@@ -95,7 +95,9 @@ class ConnectionManager
     {
         $ret = [];
         foreach ($ids as $id) {
-            $user_id = $this->id2user_id[$id];
+            $user_id = null;
+            if (isset($this->id2user_id[$id]))
+                $user_id = $this->id2user_id[$id];
             if (!$user_id) {
                 $user_id = 0;
             }

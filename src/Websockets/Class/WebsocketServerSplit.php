@@ -466,7 +466,6 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
                 $this->disconnect();
                 throw $e;
             }
-            gc_collect_cycles(); // Collect garbage
         }
     }
     /**

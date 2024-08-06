@@ -59,7 +59,15 @@ class MainWebsocket
         $this->commandContext->info("Starting server on {$config->address}:{$config->port}");
         $this->commandContext->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
 
-        while ($this->server->isRunning() || $this->internal->isRunning()) {
+        while (true) {
+            if (!$this->server->isRunning()) {
+                $this->server->start();
+                $this->commandContext->info("Server died. Restarting...");
+            }
+            if (!$this->internal->isRunning()) {
+                $this->internal->start();
+                $this->commandContext->info("Internal Server died. Restarting...");
+            }
             $read = [];
             $read = array_merge($read, $this->server->collect());
             $read = array_merge($read, $this->internal->collect());
