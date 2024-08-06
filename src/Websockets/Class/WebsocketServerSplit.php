@@ -355,6 +355,11 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
                         $connection = null;
                         // Accept new client connection
                         if ($key == '@server') {
+                            if (get_resource_type($readable->getResource()) === "Unknown") {
+                                $this->logger->error("[server] Server resource is invalid");
+                                echo "Server resource is invalid";
+                                continue;
+                            }
                             $this->acceptSocket($readable);
                             continue;
                         }
