@@ -351,10 +351,6 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
             try {
                 $readables = $this->streams->ready($ready);
                 foreach ($readables as $key => $readable) {
-                    if (get_resource_type($readable) === "Unknown") {
-                        $this->logger->warning("[server] Unknown resource type, abandon");
-                        continue;
-                    }
                     try {
                         $connection = null;
                         // Accept new client connection
