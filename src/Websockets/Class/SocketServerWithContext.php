@@ -59,10 +59,14 @@ class SocketServerWithContext extends SocketServer
             return stream_socket_accept($this->stream, $timeout, $peer_name);
         }, function (\ErrorException $e) {
             // If non-blocking mode, don't throw error on time out
-            if ($this->getMetadata('blocked') === false && substr_count($e->getMessage(), 'timed out') > 0) {
+            $msg = $e->getMessage();
+            if ($this->getMetadata('blocked') === false && substr_count($msg, 'timed out') > 0) {
                 return null;
             }
-            if (substr_count($e->getMessage(), "reset by peer") > 0) {
+            if (substr_count($msg, 'timed out') > 0 && substr_count($msg, 'SSL:') > 0) {
+                return null;
+            }
+            if (substr_count($msg, "reset by peer") > 0) {
                 return null;
             }
             print ("====================");
