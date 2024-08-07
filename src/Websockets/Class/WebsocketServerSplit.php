@@ -82,7 +82,7 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
      * @param string $scheme Scheme (tcp or ssl)
      * @throws InvalidArgumentException If invalid port provided
      */
-    public function __construct(int $port = 80, bool $ssl = false, ?string $base = null)
+    public function __construct(int $port = 80, bool $ssl = false, ?string $base = null, $context)
     {
         if ($port < 0 || $port > 65535) {
             throw new InvalidArgumentException("Invalid port '{$port}' provided");
@@ -91,7 +91,7 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
         $this->scheme = $ssl ? 'ssl' : 'tcp';
         $this->logger = new NullLogger();
         $this->base = $base ?: $port;
-        $this->setStreamFactory(new StreamFactory());
+        $this->setStreamFactory(new StreamFactoryWithContext($context));
     }
 
     /**
@@ -568,6 +568,7 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
                 $this->logger->warning("[server] Denied connection, reached max {$this->maxConnections}");
                 return;
             }
+            print ("[server] Accepting connection... (t=" . get_resource_type($socket->getResource()) . "\r\n");
             $stream = $socket->accept();
             $name = $stream->getRemoteName();
             $this->streams->attach($stream, $name);

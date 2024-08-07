@@ -58,7 +58,6 @@ class MainWebsocket
 
         $this->commandContext->info("Starting server on {$config->address}:{$config->port}");
         $this->commandContext->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
-        $tmp_servers = [];
         try {
             while (true) {
                 if (!$this->server->isRunning()) {
@@ -79,31 +78,11 @@ class MainWebsocket
                     stream_select($read, $write, $oob, 5);
                 }
 
-                $tmp_servers = [];
-                $problem = false;
-                foreach ($read as $k => $t) {
-                    if (strpos($k, "@server")) {
-                        if (get_resource_type($t) == "Unknown") {
-                            $problem = true;
-                            break;
-                        }
-                        $tmp_servers[] = $t;
-                    }
-                }
-                if ($problem) {
-                    $this->commandContext->warn("Problem occurred, Skip");
-                    continue;
-                }
-
                 $this->server->loop($read);
                 $this->internal->loop($read);
                 gc_collect_cycles();
             }
         } catch (\Throwable $e) {
-            var_dump($tmp_servers);
-            foreach ($tmp_servers as $server) {
-                echo "RES_type" . get_resource_type($server) . "\r\n";
-            }
             $this->commandContext->warn($e->getTraceAsString());
             $this->commandContext->error($e->getMessage());
         }

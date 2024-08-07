@@ -10,25 +10,22 @@ class ServerUtil
 {
     public static function makeServer(WebsocketConfig $config)
     {
-        $server = new WebsocketServerSplit($config->port, $config->cert && $config->pk);
-
-        $middlewares = [];
-        $middlewares[] = new \WebSocket\Middleware\CloseHandler();
-        $middlewares[] = new \WebSocket\Middleware\PingResponder();
+        $context = null;
         if ($config->cert && $config->pk) {
-            /**
-             * @var \Phrity\Net\StreamFactory
-             */
-            $fact = new StreamFactoryWithContext(stream_context_create([
+            $context = stream_context_create([
                 'ssl' => [
                     'local_cert' => $config->cert,
                     'local_pk' => $config->pk,
                     'allow_self_signed' => $config->selfSigned,
                     'verify_peer' => false,
                 ]
-            ]));
-            $server->setStreamFactory($fact);
+            ]);
         }
+        $server = new WebsocketServerSplit($config->port, $config->cert && $config->pk, null, $context);
+
+        $middlewares = [];
+        $middlewares[] = new \WebSocket\Middleware\CloseHandler();
+        $middlewares[] = new \WebSocket\Middleware\PingResponder();
         foreach ($middlewares as $middleware) {
             $server->addMiddleware($middleware);
         }

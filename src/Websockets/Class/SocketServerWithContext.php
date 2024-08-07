@@ -3,6 +3,7 @@
 namespace Xypp\WsNotification\Websockets\Class;
 
 use Phrity\Net\SocketServer;
+use Phrity\Net\SocketStream;
 use Phrity\Net\StreamException;
 use Phrity\Util\ErrorHandler;
 use Psr\Http\Message\UriInterface;
@@ -16,10 +17,15 @@ class SocketServerWithContext extends SocketServer
     /**
      * Create new socker server instance
      * @param \Psr\Http\Message\UriInterface $uri The URI to open socket on.
+     * @param resource $context
      * @throws StreamException if unable to create socket.
      */
     public function __construct(UriInterface $uri, $context)
     {
+        if (!$context) {
+            parent::__construct($uri);
+            return;
+        }
         $this->handler = new ErrorHandler();
         if (!in_array($uri->getScheme(), $this->getTransports())) {
             throw new StreamException(StreamException::SCHEME_TRANSPORT, ['scheme' => $uri->getScheme()]);
@@ -37,5 +43,14 @@ class SocketServerWithContext extends SocketServer
             return stream_socket_server($this->address, $error_code, $error_message, $flags, $context);
         }, new StreamException(StreamException::SERVER_SOCKET_ERR, ['uri' => $uri->__toString()]));
         $this->evalStream();
+    }
+
+
+    public function accept(int|null $timeout = null): SocketStream|null
+    {
+        if (get_resource_type($this->stream) != 'stream') {
+            throw new StreamException(StreamException::SERVER_CLOSED);
+        }
+        return parent::accept($timeout);
     }
 }
