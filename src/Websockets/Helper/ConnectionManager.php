@@ -68,27 +68,35 @@ class ConnectionManager
     {
         return $this->id2user_obj[$id] ?? new Guest();
     }
+    public function isInternal($id): bool
+    {
+        return $this->get($id)->getMeta("internal") ?? false;
+    }
+    public function send($id, string $data)
+    {
+        $connection = $this->get($id);
+        if ($connection) {
+            for ($i = 0; $i < self::RETRY_CNT; $i++) {
+                try {
+                    $connection->send(new WebSocket\Message\Text($data));
+                    break;
+                } catch (\Exception $e) {
+                    if ($i == self::RETRY_CNT - 1) {
+                        echo "send error:  id: $id\r\n";
+                        throw $e;
+                    }
+                    continue;
+                }
+            }
+        }
+    }
     public function broadcast(?array $ids, string $data)
     {
         if ($ids === null) {
             $ids = array_keys($this->connections);
         }
         foreach ($ids as $id) {
-            $connection = $this->get($id);
-            if ($connection) {
-                for ($i = 0; $i < self::RETRY_CNT; $i++) {
-                    try {
-                        $connection->send(new WebSocket\Message\Text($data));
-                        break;
-                    } catch (\Exception $e) {
-                        if ($i == self::RETRY_CNT - 1) {
-                            echo "broadcast error:  id: $id\r\n";
-                            throw $e;
-                        }
-                        continue;
-                    }
-                }
-            }
+            $this->send($id, $data);
         }
     }
     public function groupIdByUser(array $ids)

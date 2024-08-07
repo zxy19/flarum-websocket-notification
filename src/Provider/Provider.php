@@ -6,6 +6,7 @@ use Flarum\Foundation\AbstractServiceProvider;
 use Illuminate\Contracts\Container\Container;
 use Xypp\WsNotification\Extend\WebsocketDataCollection;
 use Xypp\WsNotification\Helper\Bridge;
+use Xypp\WsNotification\Integration\Reaction\ReactionData;
 use Xypp\WsNotification\Websockets\Helper\ConnectionManager;
 use Xypp\WsNotification\Websockets\Helper\SubscribeManager;
 use Xypp\WsNotification\Websockets\Helper\StateManager;
@@ -34,6 +35,7 @@ class Provider extends AbstractServiceProvider
             $collection->add(TypingData::class);
             $collection->add(FlagData::class);
             $collection->add(TagData::class);
+            $collection->add(ReactionData::class);
             return $collection;
         });
         $this->container->singleton(ConnectionManager::class);

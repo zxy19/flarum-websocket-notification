@@ -33,6 +33,8 @@ class RequestForSerializer implements ServerRequestInterface
     {
         if ($name == "actorReference") {
             return $this->actorRef;
+        } else if ($name == "actor") {
+            return $this->actorRef->getActor();
         } else {
             return $default;
         }
@@ -40,7 +42,8 @@ class RequestForSerializer implements ServerRequestInterface
     public function getAttributes()
     {
         return [
-            "actorReference" => $this->actorRef
+            "actorReference" => $this->actorRef,
+            "actor" => $this->actorRef->getActor()
         ];
     }
     public function getCookieParams()

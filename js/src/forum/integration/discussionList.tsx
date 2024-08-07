@@ -31,8 +31,12 @@ export function initDiscussionList() {
         id: string;
         count: number;
     }[] = [];
-    function clearAll() {
+    let toPullUpDiscussions: Discussion[] = [];
+    function refresh() {
+        toPullUpDiscussions.forEach(app.discussions.addDiscussion.bind(app.discussions));
+
         comingDiscussions = [];
+        toPullUpDiscussions = [];
         m.redraw();
     }
     function addOne(id: string, title: string, post: number) {
@@ -58,7 +62,13 @@ export function initDiscussionList() {
     }
 
     addMessageCb("discussion", (path: ModelPath, data: any) => {
-        addOne(data.id, data.title, data.post);
+        const discussion: Discussion = app.store.pushPayload<Discussion>(data.discussion);
+        const idx = toPullUpDiscussions.findIndex(d => d.id() == discussion.id());
+        if (idx != -1) {
+            toPullUpDiscussions.splice(idx, 1);
+        }
+        toPullUpDiscussions.push(discussion);
+        addOne(discussion.id() as string, discussion.title(), data.post);
         m.redraw();
     });
 
@@ -69,7 +79,7 @@ export function initDiscussionList() {
             vnode.children.unshift(ComingDiscussion.component({
                 list: comingDiscussions,
                 cb: (() => {
-                    (this.attrs as any).state.refresh().then(clearAll);
+                    refresh();
                 }).bind(this)
             }));
         }

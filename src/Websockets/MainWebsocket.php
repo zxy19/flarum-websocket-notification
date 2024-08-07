@@ -123,7 +123,7 @@ class MainWebsocket
             if ($data->type == 'sync') {//Internal command.
                 if (!$connection->getMeta("internal"))
                     return;
-                $this->handleSync($data->data);
+                $this->handleSync($data);
             } else if ($data->type == 'subscribe') {//Set subscribe.
                 $this->subscribeManager->unsubscribe($id);
                 $paths = $data->path;

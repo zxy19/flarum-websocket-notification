@@ -10,7 +10,7 @@ export default class adminPage extends ExtensionPage {
         "port", "address", "cert", "pk", "self-signed"
     ];
     WS_TYPES = ["websocket", "internal"];
-    WS_FUNCTIONS = ["discussion", "post", "notification", "like", "typing"]
+    WS_FUNCTIONS = ["discussion", "post", "notification", "like", "typing","reaction"]
     oncreate(vnode: any): void {
         super.oncreate(vnode);
     }

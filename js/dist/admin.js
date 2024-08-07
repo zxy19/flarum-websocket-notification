@@ -32,7 +32,7 @@ var adminPage = /*#__PURE__*/function (_ExtensionPage) {
     _this = _ExtensionPage.call.apply(_ExtensionPage, [this].concat(args)) || this;
     _this.WS_KEYS = ["port", "address", "cert", "pk", "self-signed"];
     _this.WS_TYPES = ["websocket", "internal"];
-    _this.WS_FUNCTIONS = ["discussion", "post", "notification", "like", "typing"];
+    _this.WS_FUNCTIONS = ["discussion", "post", "notification", "like", "typing", "reaction"];
     return _this;
   }
   (0,_babel_runtime_helpers_esm_inheritsLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(adminPage, _ExtensionPage);

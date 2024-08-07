@@ -4,6 +4,7 @@ import { initPost } from "./post";
 import { initDiscussionList } from "./discussionList";
 import { initLike } from "./like";
 import { initTypingTip } from "./typing";
+import { initReaction } from "./reaction";
 
 export default function init() {
     initNotification();
@@ -11,4 +12,5 @@ export default function init() {
     initDiscussionList();
     initLike();
     initTypingTip();
+    initReaction();
 }

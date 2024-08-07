@@ -1,15 +1,18 @@
 <?php
 use Flarum\Api\Serializer\DiscussionSerializer;
 use Flarum\Api\Serializer\ForumSerializer;
+use Flarum\Approval\Event\PostWasApproved;
 use Flarum\Extend\Event;
 use Flarum\Extend\Settings;
 use Flarum\Post\Event\Posted;
 use Flarum\Post\Event\Saving;
 use Xypp\WsNotification\Integration\Flag\FlagEventsListener;
 use Xypp\WsNotification\Integration\Like\LikeEventsListener;
+use Xypp\WsNotification\Integration\Post\PostApproval;
 use Xypp\WsNotification\Integration\Post\PostSavingEvent;
 use Xypp\WsNotification\Integration\Post\PostStartEvent;
 use Xypp\WsNotification\Integration\Notification\NotificationDriver;
+use Xypp\WsNotification\Integration\Reaction\ReactionEventsListener;
 use Xypp\WsNotification\Integration\TypeTip\TypeTipAttr;
 use Xypp\WsNotification\Integration\TypeTip\TypeTipDiscussionSerializer;
 use Flarum\Extend;
@@ -20,6 +23,8 @@ $ret = [
     (new Event())
         ->listen(Saving::class, PostSavingEvent::class)
         ->listen(Posted::class, PostStartEvent::class)
+        ->listen(PostWasApproved::class, PostApproval::class)
+        ->subscribe(ReactionEventsListener::class)
         ->subscribe(LikeEventsListener::class)
         ->subscribe(FlagEventsListener::class),
     (new Extend\ApiSerializer(ForumSerializer::class))
@@ -32,7 +37,8 @@ $ret = [
         ->default("xypp.ws_notification.function.notification", true)
         ->default("xypp.ws_notification.function.like", true)
         ->default("xypp.ws_notification.function.typing", true)
-        ->default("xypp.ws_notification.function.flag", true),
+        ->default("xypp.ws_notification.function.flag", true)
+        ->default("xypp.ws_notification.function.reaction", true),
     (new Extend\User())
         ->registerPreference("xyppWsnFloaterPosition", null, "center")
         ->registerPreference("xyppWsnNewDiscussionAutoRefresh", null, false)

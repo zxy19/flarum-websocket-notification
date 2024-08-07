@@ -56,6 +56,8 @@
     "require-dev": {
         "flarum/likes": "^1.8",
         "flarum/flags": "^1.8",
-        "flarum/tags": "^1.8"
+        "flarum/tags": "^1.8",
+        "fof/reactions": "^1.4",
+        "flarum/approval": "^1.8"
     }
 }
