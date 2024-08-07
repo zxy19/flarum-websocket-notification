@@ -355,11 +355,6 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
                         $connection = null;
                         // Accept new client connection
                         if ($key == '@server') {
-                            if (get_resource_type($readable->getResource()) === "Unknown") {
-                                $this->logger->error("[server] Server resource is invalid");
-                                echo "Server resource is invalid";
-                                continue;
-                            }
                             $this->acceptSocket($readable);
                             continue;
                         }
@@ -568,8 +563,11 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
                 $this->logger->warning("[server] Denied connection, reached max {$this->maxConnections}");
                 return;
             }
-            print ("[server] Accepting connection... (t=" . get_resource_type($socket->getResource()) . ";id=" . get_resource_id($socket->getResource()) . "\r\n");
             $stream = $socket->accept();
+            if (!$stream) {
+                $this->logger->warning("[server] Broken connection, no stream available");
+                return;
+            }
             $name = $stream->getRemoteName();
             $this->streams->attach($stream, $name);
             $connection = new Connection($stream, false, true, $this->isSsl());

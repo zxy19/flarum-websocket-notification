@@ -62,9 +62,9 @@ class SocketServerWithContext extends SocketServer
             if ($this->getMetadata('blocked') === false && substr_count($e->getMessage(), 'timed out') > 0) {
                 return null;
             }
-            print ("====================");
-            print ($e->getMessage());
-            print ($e->getTraceAsString());
+            if (substr_count($e->getMessage(), "reset by peer") > 0) {
+                return null;
+            }
             throw new StreamException(StreamException::SERVER_ACCEPT_ERR);
         });
         return $stream ? new SocketStream($stream) : null;
