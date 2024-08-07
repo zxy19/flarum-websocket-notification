@@ -568,7 +568,7 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
                 $this->logger->warning("[server] Denied connection, reached max {$this->maxConnections}");
                 return;
             }
-            print ("[server] Accepting connection... (t=" . get_resource_type($socket->getResource()) . "\r\n");
+            print ("[server] Accepting connection... (t=" . get_resource_type($socket->getResource()) . ";id=" . get_resource_id($socket->getResource()) . "\r\n");
             $stream = $socket->accept();
             $name = $stream->getRemoteName();
             $this->streams->attach($stream, $name);
