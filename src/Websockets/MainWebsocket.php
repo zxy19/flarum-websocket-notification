@@ -26,6 +26,8 @@ class MainWebsocket
     protected array $subscribe = [];
     protected array $middlewares = [];
     protected array $middlewaresInternal = [];
+    protected array $workers = [];
+    protected int $workerId = 0;
     protected DataDispatchHelper $helper;
     protected SubscribeManager $subscribeManager;
     protected ConnectionManager $connectionManager;
@@ -121,13 +123,7 @@ class MainWebsocket
             if ($data->type == 'sync') {//Internal command.
                 if (!$connection->getMeta("internal"))
                     return;
-                $path = new ModelPath($data->path);
-                if ($path->getId("state")) {
-                    $this->stateManager->setState($path);
-                    $this->syncManager->performSyncState($path);
-                } else {
-                    $this->syncManager->performSync($path);
-                }
+                $this->handleSync($data->data);
             } else if ($data->type == 'subscribe') {//Set subscribe.
                 $this->subscribeManager->unsubscribe($id);
                 $paths = $data->path;
@@ -167,7 +163,6 @@ class MainWebsocket
             $this->close($connection);
         }
     }
-
     protected function close(WebSocket\Connection $connection)
     {
         $id = $connection->getMeta('id');
@@ -181,5 +176,16 @@ class MainWebsocket
         $this->subscribeManager->unsubscribe($id);
         $this->connectionManager->remove($id);
         $this->commandContext->info("Connection closed: {$connection->getMeta('id')}");
+    }
+
+    protected function handleSync($data)
+    {
+        $path = new ModelPath($data->path);
+        if ($path->getId("state")) {
+            $this->stateManager->setState($path);
+            $this->syncManager->performSyncState($path);
+        } else {
+            $this->syncManager->performSync($path);
+        }
     }
 }

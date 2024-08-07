@@ -65,6 +65,12 @@ class SocketServerWithContext extends SocketServer
             if (substr_count($e->getMessage(), "reset by peer") > 0) {
                 return null;
             }
+            print ("====================");
+            print ("\n");
+            print ($e->getMessage());
+            print ("\n");
+            print ($e->getTraceAsString());
+            print ("\n");
             throw new StreamException(StreamException::SERVER_ACCEPT_ERR);
         });
         return $stream ? new SocketStream($stream) : null;
