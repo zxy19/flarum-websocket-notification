@@ -51,6 +51,22 @@ class SocketServerWithContext extends SocketServer
         if (get_resource_type($this->stream) != 'stream') {
             throw new StreamException(StreamException::SERVER_CLOSED);
         }
-        return parent::accept($timeout);
+        if (!isset($this->stream)) {
+            throw new StreamException(StreamException::SERVER_CLOSED);
+        }
+        $stream = $this->handler->with(function () use ($timeout) {
+            $peer_name = '';
+            return stream_socket_accept($this->stream, $timeout, $peer_name);
+        }, function (\ErrorException $e) {
+            // If non-blocking mode, don't throw error on time out
+            if ($this->getMetadata('blocked') === false && substr_count($e->getMessage(), 'timed out') > 0) {
+                return null;
+            }
+            print ("====================");
+            print ($e->getMessage());
+            print ($e->getTraceAsString());
+            throw new StreamException(StreamException::SERVER_ACCEPT_ERR);
+        });
+        return $stream ? new SocketStream($stream) : null;
     }
 }
