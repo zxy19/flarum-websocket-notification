@@ -82,6 +82,7 @@ class MainWebsocket
 
                 $this->server->loop($read);
                 $this->internal->loop($read);
+                $this->clearBroken();
                 gc_collect_cycles();
             }
         } catch (\Throwable $e) {
@@ -190,6 +191,16 @@ class MainWebsocket
             $this->syncManager->performSyncState($path);
         } else {
             $this->syncManager->performSync($path);
+        }
+    }
+
+    protected function clearBroken()
+    {
+        $brk = $this->connectionManager->getBroken();
+        foreach ($brk as $id) {
+            $conn = $this->connectionManager->get($id);
+            $this->commandContext->warn("Clear broken id $id");
+            $this->close($conn);
         }
     }
 }

@@ -27,6 +27,7 @@ class TypeTipDiscussionSerializer
                     ->add("typing")
             )
         )->get();
+        $this->userSerializer->setRequest($serializer->getRequest());
         $typings->each(function (WebsocketUserState $state) use (&$typing) {
             $typing[] = [
                 "data" => [

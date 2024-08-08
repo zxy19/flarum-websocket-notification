@@ -15,6 +15,7 @@ class ConnectionManager
     protected array $connections = [];
     protected array $id2user_id = [];
     protected array $id2user_obj = [];
+    protected array $broken = [];
     protected int $id = 0;
     protected DataDispatchHelper $helper;
     public function __construct(DataDispatchHelper $helper)
@@ -84,6 +85,7 @@ class ConnectionManager
                     if ($i == self::RETRY_CNT - 1) {
                         echo "send error:  id: $id\r\n";
                         $connection->close();
+                        $this->broken[] = $id;
                     }
                     continue;
                 }
@@ -120,5 +122,12 @@ class ConnectionManager
     public function clear()
     {
         WebsocketAccessToken::query()->delete();
+    }
+
+    public function getBroken(): array
+    {
+        $ret = $this->broken;
+        $this->broken = [];
+        return $ret;
     }
 }
