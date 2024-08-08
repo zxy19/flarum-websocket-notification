@@ -58,6 +58,7 @@
         "flarum/flags": "^1.8",
         "flarum/tags": "^1.8",
         "fof/reactions": "^1.4",
-        "flarum/approval": "^1.8"
+        "flarum/approval": "^1.8",
+        "fof/polls": "^2.2"
     }
 }

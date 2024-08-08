@@ -108,6 +108,7 @@ class MainWebsocket
                 if ($user_id) {
                     $this->stateManager->connectedUser($user_id);
                 }
+                $this->helper->connected($id);
                 $this->commandContext->info("Connection opened: {$connection->getMeta('id')}");
             })
             ->start();
@@ -166,6 +167,10 @@ class MainWebsocket
     protected function close(WebSocket\Connection $connection)
     {
         $id = $connection->getMeta('id');
+
+        $this->commandContext->info("Cleaning up: {$id}");
+        $this->subscribeManager->unsubscribe($id);
+
         $user_id = $this->connectionManager->user($id);
         if ($user_id) {
             $releases = $this->stateManager->getDisconnectReleased($user_id);
@@ -173,7 +178,6 @@ class MainWebsocket
                 $this->syncManager->performReleasing($path);
             }
         }
-        $this->subscribeManager->unsubscribe($id);
         $this->connectionManager->remove($id);
         $this->commandContext->info("Connection closed: {$connection->getMeta('id')}");
     }

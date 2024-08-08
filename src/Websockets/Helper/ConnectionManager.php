@@ -83,7 +83,7 @@ class ConnectionManager
                 } catch (\Exception $e) {
                     if ($i == self::RETRY_CNT - 1) {
                         echo "send error:  id: $id\r\n";
-                        throw $e;
+                        $connection->close();
                     }
                     continue;
                 }

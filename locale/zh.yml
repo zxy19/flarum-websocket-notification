@@ -18,6 +18,9 @@ xypp-websocket-notification:
         notification: 通知
         like: 点赞
         typing: 输入
+        reaction: 戳表情
+        poll: 投票
+        online: 在线
       websocket:
         title: Websocket
         desc: Websocket服务器设置

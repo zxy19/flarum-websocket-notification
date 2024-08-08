@@ -2,6 +2,7 @@
 
 namespace Xypp\WsNotification\Extend;
 
+use Flarum\Foundation\ContainerUtil;
 use Illuminate\Contracts\Container\Container;
 use Xypp\WsNotification\AbstractDataDispatchType;
 
@@ -9,6 +10,7 @@ class WebsocketDataCollection
 {
     protected Container $container;
     protected array $unInitTypes = [];
+    protected array $unInitCallbacks = [];
     protected array $types = [];
     protected array $class2name = [];
     protected array $connectCb = [];
@@ -23,19 +25,26 @@ class WebsocketDataCollection
     }
     public function init(): void
     {
-        if (empty($this->unInitTypes)) {
-            return;
+        if (!empty($this->unInitTypes)) {
+            foreach ($this->unInitTypes as $typeClass) {
+                $type = $this->container->make($typeClass);
+                $this->types[$type->name] = $type;
+                $this->class2name[get_class($type)] = $type->name;
+            }
+            $this->unInitTypes = [];
         }
-        foreach ($this->unInitTypes as $typeClass) {
-            $type = $this->container->make($typeClass);
-            $this->types[$type->name] = $type;
-            $this->class2name[get_class($type)] = $type->name;
+
+        if (!empty($this->unInitCallbacks)) {
+            foreach ($this->unInitCallbacks as $cb) {
+                $cb = ContainerUtil::wrapCallback($cb, $this->container);
+                $this->connectCb[] = $cb;
+            }
+            $this->unInitCallbacks = [];
         }
-        $this->unInitTypes = [];
     }
-    public function addConnectCb(callable $cb): void
+    public function addConnectCb(callable|string $cb): void
     {
-        $this->connectCb[] = $cb;
+        $this->unInitCallbacks[] = $cb;
     }
 
     public function getTypes(): array
@@ -64,6 +73,7 @@ class WebsocketDataCollection
     }
     public function connected($id)
     {
+        $this->init();
         foreach ($this->connectCb as $cb) {
             $cb($id);
         }

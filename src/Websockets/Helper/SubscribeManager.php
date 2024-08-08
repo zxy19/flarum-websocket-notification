@@ -58,9 +58,6 @@ class SubscribeManager
         foreach ($this->user2subPath[$id] as $path) {
             $currentObj = &$this->subscribes;
             foreach ($path->getKeys() as $p) {
-                if (!isset($currentObj[$p])) {
-                    return;
-                }
                 $currentObj = &$currentObj[$p];
             }
             if (isset($currentObj['_ids'])) {

@@ -18,6 +18,9 @@ xypp-websocket-notification:
         notification: Notification
         like: Like
         typing: Type Tip
+        reaction: Reaction
+        poll: Poll
+        online: Online
       websocket:
         title: Websocket
         desc: The websocket server settings.

@@ -50,7 +50,8 @@ class DiscussionController extends AbstractShowController
      */
     public $include = [
         'lastPostedUser',
-        'lastPost'
+        'lastPost',
+        "user"
     ];
 
     /**
