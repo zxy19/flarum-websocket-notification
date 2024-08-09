@@ -60,12 +60,11 @@ class SubscribeManager
             foreach ($path->getKeys() as $p) {
                 $currentObj = &$currentObj[$p];
             }
-            if (isset($currentObj['_ids'])) {
-                for ($i = 0; $i < count($currentObj['_ids']); $i++) {
-                    if ($currentObj['_ids'][$i] == $id) {
-                        array_splice($currentObj['_ids'], $i, 1);
-                        break;
-                    }
+            for ($i = 0; $i < count($currentObj['_ids']); $i++) {
+                if ($currentObj['_ids'][$i] == $id) {
+                    array_splice($currentObj['_ids'], $i, 1);
+                    echo "unsubscribed(" . $id . "): " . $path->getPath() . "\r\n";
+                    break;
                 }
             }
         }

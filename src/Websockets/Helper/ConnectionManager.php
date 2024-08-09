@@ -85,11 +85,15 @@ class ConnectionManager
                     if ($i == self::RETRY_CNT - 1) {
                         echo "send error:  id: $id\r\n";
                         $connection->close();
+                        $this->remove($id);
                         $this->broken[] = $id;
                     }
                     continue;
                 }
             }
+        } else {
+            echo "send not found id: $id\r\n";
+            $this->broken[] = $id;
         }
     }
     public function broadcast(?array $ids, string $data)
@@ -126,7 +130,7 @@ class ConnectionManager
 
     public function getBroken(): array
     {
-        $ret = $this->broken;
+        $ret = array_unique($this->broken);
         $this->broken = [];
         return $ret;
     }
