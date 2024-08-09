@@ -30,10 +30,12 @@ class ConnectionManager
         $code = $url->getPath();
         $code = trim($code, '/?#\\:=');
         $this->id++;
+        $id = $this->id;
         $connection->setMeta('id', $this->id);
 
         $access = WebsocketAccessToken::where("token", $code)->first();
         if (!$access || !$access->valid()) {
+            $this->logger->verbose("Connection refuse($id):invalid token");
             $connection->close();
             return 0;
         }
@@ -46,8 +48,8 @@ class ConnectionManager
         $access->delete();
 
         $this->connections[$this->id] = $connection;
-
-        return $this->id;
+        $this->logger->debug("Connection added($id)");
+        return $id;
     }
     public function remove($id)
     {
@@ -129,12 +131,10 @@ class ConnectionManager
         }
         return $ret;
     }
-
     public function clear()
     {
         WebsocketAccessToken::query()->delete();
     }
-
     public function getBroken(): array
     {
         $ret = array_unique($this->broken);

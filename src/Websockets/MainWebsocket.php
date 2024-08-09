@@ -102,6 +102,10 @@ class MainWebsocket
             ->onClose(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
                 $this->close($connection->getMeta("id"));
             })
+            ->onError(function ($server, $connection, \Throwable $e) {
+                $this->logger->error("{$e->getMessage()}");
+                $this->logger->error("{$e->getTraceAsString()}");
+            })
             ->onConnect(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
                 $id = $this->connectionManager->add($connection, $connection->getHandshakeRequest());
                 if (!$id) {
