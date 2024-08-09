@@ -164,8 +164,6 @@ class MainWebsocket
             }
         } catch (\Exception $e) {
             $this->logger->warn($e->getMessage());
-            $connection->close();
-            $this->close($connection);
         }
     }
     protected function close(int $id)

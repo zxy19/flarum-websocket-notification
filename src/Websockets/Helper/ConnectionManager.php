@@ -88,7 +88,10 @@ class ConnectionManager
                 } catch (\Exception $e) {
                     if ($i == self::RETRY_CNT - 1) {
                         $this->logger->warn("send error:  id: $id");
-                        $connection->close();
+                        try {
+                            $connection->close();
+                        } catch (\Exception $e) {
+                        }
                         $this->remove($id);
                         $this->broken[] = $id;
                     }
