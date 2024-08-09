@@ -13,6 +13,8 @@ class TypeTipAttr
     }
     public function __invoke($serializer, $model, $attributes)
     {
-        return $this->settings->get('xypp.ws_notification.function.type')??true;
+        $attributes["xyppWsnTypeTip"] = $this->settings->get('xypp.ws_notification.function.type') ?? true;
+        $attributes["xyppWsnTypeTipCountLimit"] = $this->settings->get('xypp.ws_notification.options.typing_limit') ?? 4;
+        return $attributes;
     }
 }

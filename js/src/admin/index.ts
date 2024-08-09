@@ -6,6 +6,4 @@ app.initializers.add('xypp/flarum-websocket-notification', () => {
   app.extensionData
     .for("xypp-websocket-notification")
     .registerPage(adminPage);
-
-
 });

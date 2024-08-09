@@ -21,6 +21,10 @@ xypp-websocket-notification:
         reaction: Reaction
         poll: Poll
         online: Online
+      options:
+        title: Options
+        desc: The function's options.
+        typing_limit: Max count of displaying typing tip.
       websocket:
         title: Websocket
         desc: The websocket server settings.

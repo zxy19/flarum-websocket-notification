@@ -21,6 +21,10 @@ xypp-websocket-notification:
         reaction: 戳表情
         poll: 投票
         online: 在线
+      options:
+        title: 选项
+        desc: 功能的设置选项
+        typing_limit: 最大的显示输入提示数
       websocket:
         title: Websocket
         desc: Websocket服务器设置

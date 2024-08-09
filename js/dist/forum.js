@@ -712,7 +712,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var MAX_LIST_LEN = 1;
 var TypingTip = /*#__PURE__*/function (_Component) {
   function TypingTip() {
     return _Component.apply(this, arguments) || this;
@@ -720,6 +719,7 @@ var TypingTip = /*#__PURE__*/function (_Component) {
   (0,_babel_runtime_helpers_esm_inheritsLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(TypingTip, _Component);
   var _proto = TypingTip.prototype;
   _proto.view = function view(vnode) {
+    var MAX_LIST_LEN = parseInt(flarum_forum_app__WEBPACK_IMPORTED_MODULE_2___default().forum.attribute("xyppWsnTypeTipCountLimit") || "4");
     if (!this.attrs.typingUsers.length) {
       return m("div", null, flarum_forum_app__WEBPACK_IMPORTED_MODULE_2___default().translator.trans("xypp-websocket-notification.forum.typing.no_one"));
     }

@@ -33,7 +33,7 @@ $ret = [
         ->subscribe(LikeEventsListener::class)
         ->subscribe(FlagEventsListener::class),
     (new Extend\ApiSerializer(ForumSerializer::class))
-        ->attribute("xyppWsnTypeTip", TypeTipAttr::class),
+        ->attributes(TypeTipAttr::class),
     (new Extend\ApiSerializer(UserSerializer::class))
         ->attributes(OnlineAttribute::class),
     (new Extend\ApiSerializer(DiscussionSerializer::class))
@@ -47,7 +47,8 @@ $ret = [
         ->default("xypp.ws_notification.function.flag", true)
         ->default("xypp.ws_notification.function.reaction", true)
         ->default("xypp.ws_notification.function.online", true)
-        ->default("xypp.ws_notification.function.poll", true),
+        ->default("xypp.ws_notification.function.poll", true)
+        ->default("xypp.ws_notification.options.typing_limit", 4),
     (new Extend\User())
         ->registerPreference("xyppWsnFloaterPosition", null, "center")
         ->registerPreference("xyppWsnNewDiscussionAutoRefresh", null, false)

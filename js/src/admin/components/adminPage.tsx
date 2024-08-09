@@ -10,7 +10,7 @@ export default class adminPage extends ExtensionPage {
         "port", "address", "cert", "pk", "self-signed"
     ];
     WS_TYPES = ["websocket", "internal"];
-    WS_FUNCTIONS = ["discussion", "post", "notification", "like", "typing","reaction","poll","online"]
+    WS_FUNCTIONS = ["discussion", "post", "notification", "like", "typing", "reaction", "poll", "online"]
     oncreate(vnode: any): void {
         super.oncreate(vnode);
     }
@@ -55,6 +55,17 @@ export default class adminPage extends ExtensionPage {
                         setting: `xypp.ws_notification.function.${key}`,
                         label: _trans(`settings.function.${key}`),
                     })
+                })}
+            </div>
+            <div className="xypp-wsn-adminPage-group">
+                <h2>{_trans(`settings.options.title`)}</h2>
+                <div>
+                    {_trans(`settings.options.desc`)}
+                </div>
+                {this.buildSettingComponent({
+                    type: "number",
+                    setting: `xypp.ws_notification.options.typing_limit`,
+                    label: _trans(`settings.options.typing_limit`),
                 })}
             </div>
             {/** WebSocket设置 */}

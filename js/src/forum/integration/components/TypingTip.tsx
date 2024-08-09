@@ -6,11 +6,11 @@ import User from "flarum/common/models/User";
 import avatar from "flarum/common/helpers/avatar"
 import username from "flarum/common/helpers/username"
 import Link from "flarum/common/components/Link";
-const MAX_LIST_LEN = 1;
 export default class TypingTip extends Component<{
     typingUsers: User[]
 }> {
     view(vnode: any) {
+        let MAX_LIST_LEN = parseInt(app.forum.attribute("xyppWsnTypeTipCountLimit") || "4");
         if (!this.attrs.typingUsers.length) {
             return <div>{app.translator.trans("xypp-websocket-notification.forum.typing.no_one")}</div>
         }

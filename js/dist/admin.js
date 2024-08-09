@@ -70,6 +70,12 @@ var adminPage = /*#__PURE__*/function (_ExtensionPage) {
         setting: "xypp.ws_notification.function." + key,
         label: _trans("settings.function." + key)
       });
+    })), m("div", {
+      className: "xypp-wsn-adminPage-group"
+    }, m("h2", null, _trans("settings.options.title")), m("div", null, _trans("settings.options.desc")), this.buildSettingComponent({
+      type: "number",
+      setting: "xypp.ws_notification.options.typing_limit",
+      label: _trans("settings.options.typing_limit")
     })), this.WS_TYPES.map(function (type) {
       return m("div", {
         className: "xypp-wsn-adminPage-group"
