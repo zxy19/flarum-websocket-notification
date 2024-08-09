@@ -12,11 +12,13 @@ class SubscribeManager
     protected array $user2subPath = [];
     protected DataDispatchHelper $helper;
     protected ConnectionManager $connections;
+    protected Logger $logger;
     protected int $maxSubscribeHold;
-    public function __construct(DataDispatchHelper $helper, ConnectionManager $connections, SettingsRepositoryInterface $settings)
+    public function __construct(DataDispatchHelper $helper, ConnectionManager $connections, SettingsRepositoryInterface $settings, Logger $logger)
     {
         $this->helper = $helper;
         $this->connections = $connections;
+        $this->logger = $logger;
         $this->maxSubscribeHold = $settings->get("xypp.ws_notification.common.max_subscribe_hold") ?? 10;
     }
     public function subscribe(int $id, ModelPath $path)
@@ -63,7 +65,7 @@ class SubscribeManager
             for ($i = 0; $i < count($currentObj['_ids']); $i++) {
                 if ($currentObj['_ids'][$i] == $id) {
                     array_splice($currentObj['_ids'], $i, 1);
-                    echo "unsubscribed(" . $id . "): " . $path->getPath() . "\r\n";
+                    $this->logger->debug("unsubscribed(" . $id . "): " . $path->getPath());
                     break;
                 }
             }

@@ -9,6 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use WebSocket;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Data\WebsocketConfig;
+use Xypp\WsNotification\Websockets\Helper\Logger;
 use Xypp\WsNotification\Websockets\Util\ServerUtil;
 use Xypp\WsNotification\Websockets\Class\WebsocketServerSplit;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
@@ -33,41 +34,43 @@ class MainWebsocket
     protected ConnectionManager $connectionManager;
     protected StateManager $stateManager;
     protected SyncManager $syncManager;
-    protected Command $commandContext;
+    protected Logger $logger;
     public function __construct(
         DataDispatchHelper $helper,
         SubscribeManager $subscribeManager,
         ConnectionManager $connectionManager,
         StateManager $stateManager,
-        SyncManager $syncManager
+        SyncManager $syncManager,
+        Logger $logger
     ) {
         $this->helper = $helper;
         $this->subscribeManager = $subscribeManager;
         $this->connectionManager = $connectionManager;
         $this->stateManager = $stateManager;
         $this->syncManager = $syncManager;
+        $this->logger = $logger;
     }
     public function start(Command $context, WebsocketConfig $config, WebsocketConfig $internalConfig)
     {
         $this->stateManager->clear();
         $this->connectionManager->clear();
-        $this->commandContext = $context;
-        $this->commandContext->info("Preparing server...");
+        $this->logger->setCommandContext($context);
+        $this->logger->info("Preparing server...");
         $this->server = ServerUtil::makeServer($config);
         $this->internal = ServerUtil::makeServer($internalConfig);
         $this->registerServerCallbacks($this->server);
         $this->registerServerCallbacks($this->internal);
 
-        $this->commandContext->info("Starting server on {$config->address}:{$config->port}");
-        $this->commandContext->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
+        $this->logger->info("Starting server on {$config->address}:{$config->port}");
+        $this->logger->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
         try {
             while (true) {
                 if (!$this->server->isRunning()) {
-                    $this->commandContext->warn("Server is not running, restarting...");
+                    $this->logger->warn("Server is not running, restarting...");
                     $this->server->start();
                 }
                 if (!$this->internal->isRunning()) {
-                    $this->commandContext->warn("Internal server is not running, restarting...");
+                    $this->logger->warn("Internal server is not running, restarting...");
                     $this->internal->start();
                 }
                 $read = [];
@@ -86,8 +89,8 @@ class MainWebsocket
                 gc_collect_cycles();
             }
         } catch (\Throwable $e) {
-            $this->commandContext->warn($e->getTraceAsString());
-            $this->commandContext->error($e->getMessage());
+            $this->logger->error($e->getTraceAsString());
+            $this->logger->error($e->getMessage());
         }
     }
     public function registerServerCallbacks(WebsocketServerSplit $server)
@@ -97,7 +100,7 @@ class MainWebsocket
                 $this->message($server, $connection, $message);
             })
             ->onClose(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
-                $this->close($connection);
+                $this->close($connection->getMeta("id"));
             })
             ->onConnect(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
                 $id = $this->connectionManager->add($connection, $connection->getHandshakeRequest());
@@ -110,13 +113,13 @@ class MainWebsocket
                     $this->stateManager->connectedUser($user_id);
                 }
                 $this->helper->connected($id);
-                $this->commandContext->info("Connection opened: {$connection->getMeta('id')}");
+                $this->logger->verbose("Connection opened: {$connection->getMeta('id')}");
             })
             ->start();
     }
     public function message(WebsocketServerSplit $server, WebSocket\Connection $connection, WebSocket\Message\Message $message)
     {
-        $this->commandContext->info("Message({$connection->getMeta('id')}): {$message->getContent()}");
+        $this->logger->debug("Message({$connection->getMeta('id')}): {$message->getContent()}");
         $data = json_decode($message->getContent());
         if (!$data)
             return;
@@ -136,9 +139,9 @@ class MainWebsocket
                     $r = $this->subscribeManager->subscribe($id, $path);
 
                     if ($r) {
-                        $this->commandContext->info("Subscribe({$id}):{$path}");
+                        $this->logger->debug("Subscribe({$id}):{$path}");
                     } else {
-                        $this->commandContext->info("Subscribe({$id}):{$path} rejected.");
+                        $this->logger->debug("Subscribe({$id}):{$path} rejected.");
                     }
                 }
             } else if ($data->type == 'ping') {
@@ -152,24 +155,22 @@ class MainWebsocket
                     $path->remove("release");
                     $this->stateManager->releaseState($userId, $path);
                     $this->syncManager->performReleasing($path);
-                    $this->commandContext->info("Release({$id}):{$path}");
+                    $this->logger->verbose("Release({$id}):{$path}");
                 } else {
                     $this->stateManager->setState(new ModelPath($data->path));
                     $this->syncManager->performSyncState($path);
-                    $this->commandContext->info("State({$id}):{$path}");
+                    $this->logger->verbose("State({$id}):{$path}");
                 }
             }
         } catch (\Exception $e) {
-            $this->commandContext->warn($e->getMessage());
+            $this->logger->warn($e->getMessage());
             $connection->close();
             $this->close($connection);
         }
     }
-    protected function close(WebSocket\Connection $connection)
+    protected function close(int $id)
     {
-        $id = $connection->getMeta('id');
-
-        $this->commandContext->info("Cleaning up: {$id}");
+        $this->logger->debug("Cleaning up: {$id}");
         $this->subscribeManager->unsubscribe($id);
 
         $user_id = $this->connectionManager->user($id);
@@ -180,12 +181,13 @@ class MainWebsocket
             }
         }
         $this->connectionManager->remove($id);
-        $this->commandContext->info("Connection closed: {$connection->getMeta('id')}");
+        $this->logger->verbose("Connection closed: {$id}");
     }
 
     protected function handleSync($data)
     {
         $path = new ModelPath($data->path);
+        $this->logger->verbose("sync path:" . $path);
         if ($path->getId("state")) {
             $this->stateManager->setState($path);
             $this->syncManager->performSyncState($path);
@@ -198,9 +200,8 @@ class MainWebsocket
     {
         $brk = $this->connectionManager->getBroken();
         foreach ($brk as $id) {
-            $conn = $this->connectionManager->get($id);
-            $this->commandContext->warn("Clear broken id $id");
-            $this->close($conn);
+            $this->logger->verbose("Clear broken id $id");
+            $this->close($id);
         }
     }
 }

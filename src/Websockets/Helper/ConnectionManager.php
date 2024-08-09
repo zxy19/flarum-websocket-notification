@@ -18,9 +18,11 @@ class ConnectionManager
     protected array $broken = [];
     protected int $id = 0;
     protected DataDispatchHelper $helper;
-    public function __construct(DataDispatchHelper $helper)
+    protected Logger $logger;
+    public function __construct(DataDispatchHelper $helper, Logger $logger)
     {
         $this->helper = $helper;
+        $this->logger = $logger;
     }
     public function add(WebSocket\Connection $connection, ServerRequestInterface $request): int
     {
@@ -53,6 +55,8 @@ class ConnectionManager
             unset($this->connections[$id]);
         if (isset($this->id2user_id[$id]))
             unset($this->id2user_id[$id]);
+        if (isset($this->id2user_obj[$id]))
+            unset($this->id2user_obj[$id]);
     }
     public function get($id): ?\WebSocket\Connection
     {
@@ -83,7 +87,7 @@ class ConnectionManager
                     break;
                 } catch (\Exception $e) {
                     if ($i == self::RETRY_CNT - 1) {
-                        echo "send error:  id: $id\r\n";
+                        $this->logger->warn("send error:  id: $id");
                         $connection->close();
                         $this->remove($id);
                         $this->broken[] = $id;
@@ -92,7 +96,7 @@ class ConnectionManager
                 }
             }
         } else {
-            echo "send not found id: $id\r\n";
+            $this->logger->warn("send not found id: $id");
             $this->broken[] = $id;
         }
     }
@@ -132,6 +136,7 @@ class ConnectionManager
     {
         $ret = array_unique($this->broken);
         $this->broken = [];
+        $this->logger->debug("to be cleared: " . count($ret));
         return $ret;
     }
 }
