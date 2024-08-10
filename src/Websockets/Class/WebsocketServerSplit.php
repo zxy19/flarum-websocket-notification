@@ -629,7 +629,7 @@ class WebsocketServerSplit implements LoggerAwareInterface, Stringable
                 );
             }
             $connectionHeader = trim($request->getHeaderLine('Connection'));
-            if (strtolower($connectionHeader) != 'upgrade') {
+            if (substr_count(strtolower($connectionHeader), 'upgrade') == 0) {
                 throw new HandshakeException(
                     "Handshake request with invalid Connection header: '{$connectionHeader}'",
                     $response->withStatus(426)
