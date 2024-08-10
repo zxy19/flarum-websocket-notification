@@ -12,10 +12,6 @@ app.initializers.add('xypp/flarum-websocket-notification', () => {
   setTimeout(() => {
     WebsocketHelper.getInstance().start();
   }, 1000);
-  (window as any).navigation.addEventListener("navigate", (event: any) => {
-    WebsocketHelper.getInstance().reSubscribe();
-  });
-
 
   const ctr = $("<div></div>").addClass("connectionIndicator")
   ctr.appendTo(document.body);

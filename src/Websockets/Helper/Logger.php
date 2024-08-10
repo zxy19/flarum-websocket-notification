@@ -3,8 +3,9 @@
 namespace Xypp\WsNotification\Websockets\Helper;
 
 use Illuminate\Console\Command;
+use Psr\Log\LoggerInterface;
 
-class Logger
+class Logger implements LoggerInterface
 {
     protected Command $commandContext;
     public function setContext(Command $context)
@@ -15,7 +16,7 @@ class Logger
     {
         $this->commandContext = $context;
     }
-    public function info($message)
+    public function info($message, array $context = [])
     {
         $this->commandContext->info($message);
     }
@@ -27,16 +28,37 @@ class Logger
     {
         $this->commandContext->warn($message);
     }
-    public function error($message)
+    public function error($message, array $context = [])
     {
         $this->commandContext->error($message);
     }
-    public function debug($message)
+    public function debug($message, array $context = [])
     {
         $this->commandContext->comment($message, "vvv");
     }
-    public function alert($message)
+    public function alert($message, array $context = [])
     {
         $this->commandContext->alert($message);
+    }
+
+    function critical($message, array $context = [])
+    {
+        $this->error($message);
+    }
+    function emergency($message, array $context = [])
+    {
+        $this->alert($message);
+    }
+    function log($level, $message, array $context = [])
+    {
+        $this->verbose($message);
+    }
+    function notice($message, array $context = [])
+    {
+        $this->debug($message);
+    }
+    function warning($message, array $context = [])
+    {
+        $this->warn($message);
     }
 }

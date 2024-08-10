@@ -495,9 +495,6 @@ flarum_forum_app__WEBPACK_IMPORTED_MODULE_0___default().initializers.add('xypp/f
   setTimeout(function () {
     _common_helper_WebsocketHelper__WEBPACK_IMPORTED_MODULE_1__.WebsocketHelper.getInstance().start();
   }, 1000);
-  window.navigation.addEventListener("navigate", function (event) {
-    _common_helper_WebsocketHelper__WEBPACK_IMPORTED_MODULE_1__.WebsocketHelper.getInstance().reSubscribe();
-  });
   var ctr = $("<div></div>").addClass("connectionIndicator");
   ctr.appendTo(document.body);
   m.mount(ctr[0], {

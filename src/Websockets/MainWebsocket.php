@@ -96,6 +96,7 @@ class MainWebsocket
     public function registerServerCallbacks(WebsocketServerSplit $server)
     {
         $server
+            ->setLogger($this->logger)
             ->onText(function (WebsocketServerSplit $server, WebSocket\Connection $connection, WebSocket\Message\Message $message) {
                 $this->message($server, $connection, $message);
             })
