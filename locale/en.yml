@@ -25,6 +25,12 @@ xypp-websocket-notification:
         title: Options
         desc: The function's options.
         typing_limit: Max count of displaying typing tip.
+      paster:
+        title: History Recorder
+        desc: The history recorder(Paster) will record the sync path of the models during a period of time, and then restore the path to the user when the user reconnects.
+        max_record_count: Max count of record.
+        max_restore_count: Max count to restore.
+        max_restore_time: Max time period to record.
       websocket:
         title: Websocket
         desc: The websocket server settings.
@@ -46,6 +52,7 @@ xypp-websocket-notification:
       connecting: "Connecting"
       connected: "Connected"
       disconnected: "Disconnected"
+      partial: "Connected(Not fully synced)"
     close_notification_floater: " Close"
     notification_floater:
       title: "Notification Floater"

@@ -68,6 +68,27 @@ export default class adminPage extends ExtensionPage {
                     label: _trans(`settings.options.typing_limit`),
                 })}
             </div>
+            <div className="xypp-wsn-adminPage-group">
+                <h2>{_trans(`settings.paster.title`)}</h2>
+                <div>
+                    {_trans(`settings.paster.desc`)}
+                </div>
+                {this.buildSettingComponent({
+                    type: "number",
+                    setting: `xypp.ws_notification.paster.max_record_count`,
+                    label: _trans(`settings.paster.max_record_count`),
+                })}
+                {this.buildSettingComponent({
+                    type: "number",
+                    setting: `xypp.ws_notification.paster.max_restore_count`,
+                    label: _trans(`settings.paster.max_restore_count`),
+                })}
+                {this.buildSettingComponent({
+                    type: "number",
+                    setting: `xypp.ws_notification.paster.max_restore_time`,
+                    label: _trans(`settings.paster.max_restore_time`),
+                })}
+            </div>
             {/** WebSocket设置 */}
             {this.WS_TYPES.map((type) => {
                 return <div className="xypp-wsn-adminPage-group">

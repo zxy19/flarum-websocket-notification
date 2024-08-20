@@ -9,6 +9,7 @@ import DiscussionPage from "flarum/forum/components/DiscussionPage"
 import { extend } from "flarum/common/extend";
 import { WebsocketHelper } from "../../common/helper/WebsocketHelper";
 import PageState from "flarum/common/states/PageState";
+import { addUnread } from "../utils/unreadTip";
 export function initPost() {
     addSubscribeCb("post", (items: ItemList<ModelPath>, context: Record<string, any>) => {
         if (context.discussion) {
@@ -25,6 +26,7 @@ export function initPost() {
             if (!((discussion.data as any).relationships.posts.data.find((v: any) => v.id == model.id()))) {
                 (discussion.data as any).relationships.posts.data.push({ type: 'posts', id: model.id() });
                 stream.loadNext();
+                addUnread();
             } else {
                 m.redraw();
             }

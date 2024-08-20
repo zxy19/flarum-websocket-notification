@@ -30,6 +30,11 @@ export default class ConnectionIndicator extends Component {
                     <i className="fas fa-wifi"></i>
                     {app.translator.trans("xypp-websocket-notification.forum.connection.connecting")}
                 </span>;
+            case "partial":
+                return <span className="connectionIndicator-icon partial">
+                    <i className="fas fa-circle"></i>
+                    {app.translator.trans("xypp-websocket-notification.forum.connection.partial")}
+                </span>;
         }
     }
     status(status: STATUS) {

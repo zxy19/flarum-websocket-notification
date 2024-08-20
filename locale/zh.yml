@@ -25,6 +25,12 @@ xypp-websocket-notification:
         title: 选项
         desc: 功能的设置选项
         typing_limit: 最大的显示输入提示数
+      paster:
+        title: 历史记录器
+        desc: 历史记录器(Paster)会记录一段时间内同步的所有模型路径，并在用户连接恢复的时候重新发送给用户
+        max_record_count: 最大记录数
+        max_restore_count: 最大恢复数
+        max_restore_time: 最大请求恢复时间
       websocket:
         title: Websocket
         desc: Websocket服务器设置
@@ -46,6 +52,7 @@ xypp-websocket-notification:
       connecting: "正在连接"
       connected: "已连接"
       disconnected: "未连接"
+      partial: "已连接（未完全同步）"
     close_notification_floater: " 关闭"
     notification_floater:
       title: "消息浮窗"

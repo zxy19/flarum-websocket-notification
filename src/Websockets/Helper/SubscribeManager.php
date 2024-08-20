@@ -13,20 +13,20 @@ class SubscribeManager
     protected DataDispatchHelper $helper;
     protected ConnectionManager $connections;
     protected Logger $logger;
-    protected int $maxSubscribeHold;
+    protected int $maxRestoreCount;
     public function __construct(DataDispatchHelper $helper, ConnectionManager $connections, SettingsRepositoryInterface $settings, Logger $logger)
     {
         $this->helper = $helper;
         $this->connections = $connections;
         $this->logger = $logger;
-        $this->maxSubscribeHold = $settings->get("xypp.ws_notification.common.max_subscribe_hold") ?? 10;
+        $this->maxRestoreCount = $settings->get("xypp.ws_notification.common.max_subscribe_hold") ?? 10;
     }
     public function subscribe(int $id, ModelPath $path)
     {
         if (!isset($this->user2subPath[$id])) {
             $this->user2subPath[$id] = [];
         }
-        if (count($this->user2subPath[$id]) >= $this->maxSubscribeHold) {
+        if (count($this->user2subPath[$id]) >= $this->maxRestoreCount) {
             return false;
         }
         if (

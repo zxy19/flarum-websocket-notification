@@ -3,7 +3,8 @@ import ItemList from "flarum/common/utils/ItemList";
 import ForumApplication from "flarum/forum/ForumApplication";
 import { ModelPath } from "../Data/ModelPath";
 import WebsocketAccessToken from "../model/WebsocketAccessToken";
-export type STATUS = "online" | "offline" | "connecting";
+import dayjs from "dayjs";
+export type STATUS = "online" | "offline" | "connecting" | "partial";
 
 const RETRY_INTERVALS = [100, 2000, 5000, 10000, 60000, 120000];
 
@@ -11,6 +12,8 @@ export class WebsocketHelper {
     app?: ForumApplication | AdminApplication;
     ws?: WebSocket
     statusChangeCb?: (status: STATUS) => void;
+    lastConnected: number = 0;
+    firstSubscribe: boolean = true;
     context: Record<string, any> = {};
     lastSubscribes: string[] = [];
     pingInterval?: any;
@@ -25,6 +28,7 @@ export class WebsocketHelper {
     }
     init(app: ForumApplication | AdminApplication) {
         this.app = app;
+        this.lastConnected = dayjs().unix() - 5;
     }
     async start() {
         if (this.app) {
@@ -60,13 +64,16 @@ export class WebsocketHelper {
                     clearInterval(this.pingInterval);
             }
             ws.onopen = () => {
+                this.firstSubscribe = true;
                 this.lastSubscribes = [];
                 this.reSubscribe();
                 this.pingInterval = setInterval(this.ping.bind(this), 30000);
                 if (this.statusChangeCb) this.statusChangeCb("online");
                 this.nextRetry = 0;
+                this.lastConnected = dayjs().unix();
             }
             ws.onmessage = (e) => {
+                this.lastConnected = dayjs().unix();
                 const data = JSON.parse(e.data);
                 if (data.type === "sync")
                     this.messageHandler(new ModelPath(data.path), data.data);
@@ -92,10 +99,15 @@ export class WebsocketHelper {
         console.log(`ReSubscribe: ${newSub.join(", ")}`);
         if (!this.changed(newSub)) return;
         this.lastSubscribes = newSub;
-        this.send({
+        let data: any = {
             type: "subscribe",
             path: newSub
-        });
+        };
+        if (this.firstSubscribe) {
+            this.firstSubscribe = false;
+            data.restore = dayjs().unix() - this.lastConnected;
+        }
+        this.send(data);
         return this;
     }
     state(path: ModelPath) {

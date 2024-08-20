@@ -7,6 +7,7 @@ import SettingsPage from "flarum/forum/components/SettingsPage";
 import FieldSet from "flarum/common/components/FieldSet"
 import Select from "flarum/common/components/Select";
 import WrappedFlagNotification from "./components/WrappedFlagNotification";
+import { addUnread } from "../utils/unreadTip";
 export function initNotification() {
   let notifications: { time: number, first: boolean, notification: any }[] = [];
   addSubscribeCb('notification', (items) => {
@@ -20,6 +21,7 @@ export function initNotification() {
     const model = app.store.pushPayload(data);
     const obj = { time: 8, first: false, notification: model };
     notifications.unshift(obj);
+    addUnread();
     if (app.session.user)
       app.session.user.pushAttributes({
         unreadNotificationCount: app.session.user.unreadNotificationCount() ?? 0 + 1,

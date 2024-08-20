@@ -4,6 +4,7 @@ namespace Xypp\WsNotification\Websockets\Helper;
 
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
+use Xypp\WsNotification\Websockets\Worker\WorkerRegister;
 
 class SyncManager
 {
@@ -11,25 +12,34 @@ class SyncManager
     protected DataDispatchHelper $helper;
     protected SubscribeManager $subscribeManager;
     protected ConnectionManager $connectionManager;
-    protected StateManager $stateManager;
+    protected Logger $logger;
+    protected array $workerRegisters = [];
+    protected int $nextWorkerId = 0;
     public function __construct(
         DataDispatchHelper $helper,
         SubscribeManager $subscribeManager,
-        ConnectionManager $connectionManager
+        ConnectionManager $connectionManager,
+        Logger $logger
     ) {
         $this->helper = $helper;
         $this->subscribeManager = $subscribeManager;
         $this->connectionManager = $connectionManager;
+
+        $this->logger = $logger;
     }
 
-    public function performSync(ModelPath $path)
+    public function performSync(ModelPath $path, ?array $ids = null)
     {
-        $ids = $this->subscribeManager->collectIdForPath($path);
+        if ($ids === null)
+            $ids = $this->subscribeManager->collectIdForPath($path);
         if (empty($ids)) {
             return;
         }
-        $model = $this->helper->getModelByPath($path);
         $idGrped = $this->connectionManager->groupIdByUser($ids);
+        if ($this->performSyncWorker($path, $idGrped))
+            return;
+
+        $model = $this->helper->getModelByPath($path);
         $dispatchType = $this->helper->getDispatchType($path->getName());
         if (!$dispatchType) {
             return;
@@ -51,19 +61,23 @@ class SyncManager
             );
         }
     }
-    public function performSyncState(ModelPath $path)
+    public function performSyncState(ModelPath $path, ?array $ids = null)
     {
-        $ids = $this->subscribeManager->collectIdForPath($path);
+        if ($ids === null)
+            $ids = $this->subscribeManager->collectIdForPath($path);
         if (empty($ids)) {
             return;
         }
-        $type = $this->helper->getDispatchType($path->getName());
+        $idGrped = $this->connectionManager->groupIdByUser($ids);
+        if ($this->performSyncWorker($path, $idGrped, true))
+            return;
+
         $model = null;
+        $type = $this->helper->getDispatchType($path->getName());
         if (!$type) {
             $type = $this->helper->getDispatchType("state");
         }
         $model = $type->getModel($path);
-        $idGrped = $this->connectionManager->groupIdByUser($ids);
         foreach ($idGrped as $user_id => $ids) {
             if ($type) {
                 $type->deliver(
@@ -81,7 +95,6 @@ class SyncManager
             }
         }
     }
-
     public function performReleasing(ModelPath $path)
     {
         $ids = $this->subscribeManager->collectIdForPath($path);
@@ -94,5 +107,55 @@ class SyncManager
             "path" => strval($path),
             "data" => ["state" => false]
         ]));
+    }
+    public function performSyncWorker(ModelPath $path, array $idGrped, bool $isState = false): bool
+    {
+        for ($i = 0; $i < count($this->workerRegisters); $i++) {
+            if (empty($this->workerRegisters))
+                return false;
+            $this->nextWorkerId++;
+            if ($this->nextWorkerId >= count($this->workerRegisters))
+                $this->nextWorkerId = 0;
+            /**
+             * @var WorkerRegister
+             */
+            $worker = $this->workerRegisters[$this->nextWorkerId];
+            if ($worker->alive) {
+                try {
+                    $worker->dispatch($path, $idGrped, $isState);
+                } catch (\Exception $e) {
+                    $this->logger->error("Worker({$worker->id}) Error: " . $e->getMessage());
+                    $this->logger->verbose($e->getTraceAsString());
+                    $this->removeWorker($worker->id);
+                    $this->nextWorkerId--;
+                    continue;
+                }
+                $this->logger->verbose("Job ({$path}) Dispatched to ({$worker->id})");
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public function removeWorker(int $id)
+    {
+        for ($i = 0; $i < count($this->workerRegisters); $i++) {
+            if ($this->workerRegisters[$i]->id == $id) {
+                if ($this->workerRegisters[$i]->alive) {
+                    $this->workerRegisters[$i]->stop();
+                }
+                $this->logger->info("Worker({$id}) Removed");
+                array_splice($this->workerRegisters, $i, 1);
+                return;
+            }
+        }
+    }
+    public function addWorker(\Websocket\Connection $connection)
+    {
+        $worker = new WorkerRegister($connection);
+        $connection->setMeta("worker", true);
+        $this->logger->info("Worker Registered({$worker->id})");
+        $this->workerRegisters[] = $worker;
     }
 }

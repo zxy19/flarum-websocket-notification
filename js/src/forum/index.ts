@@ -5,6 +5,8 @@ import init from './integration';
 import PageState from 'flarum/common/states/PageState';
 import { extend } from 'flarum/common/extend';
 import ConnectionIndicator from './components/ConnectionIndicator';
+import HeaderSecondary from 'flarum/forum/components/HeaderSecondary';
+import { initUnreadTip } from './utils/unreadTip';
 
 app.initializers.add('xypp/flarum-websocket-notification', () => {
   WebsocketHelper.getInstance().init(app);
@@ -12,9 +14,8 @@ app.initializers.add('xypp/flarum-websocket-notification', () => {
   setTimeout(() => {
     WebsocketHelper.getInstance().start();
   }, 1000);
-
-  const ctr = $("<div></div>").addClass("connectionIndicator")
-  ctr.appendTo(document.body);
-  m.mount(ctr[0], { view: function () { return ConnectionIndicator.component() } });
+  extend(HeaderSecondary.prototype, 'items', function (items) {
+    items.add('wsn', ConnectionIndicator.component(), 1000);
+  });
+  initUnreadTip();
 });
-

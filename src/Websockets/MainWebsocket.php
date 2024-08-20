@@ -10,6 +10,8 @@ use WebSocket;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Data\WebsocketConfig;
 use Xypp\WsNotification\Websockets\Helper\Logger;
+use Xypp\WsNotification\Websockets\Helper\PasterMessageManager;
+use Xypp\WsNotification\Websockets\Helper\WorkerManager;
 use Xypp\WsNotification\Websockets\Util\ServerUtil;
 use Xypp\WsNotification\Websockets\Class\WebsocketServerSplit;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
@@ -34,6 +36,7 @@ class MainWebsocket
     protected ConnectionManager $connectionManager;
     protected StateManager $stateManager;
     protected SyncManager $syncManager;
+    protected PasterMessageManager $pasterMessageManager;
     protected Logger $logger;
     public function __construct(
         DataDispatchHelper $helper,
@@ -41,6 +44,7 @@ class MainWebsocket
         ConnectionManager $connectionManager,
         StateManager $stateManager,
         SyncManager $syncManager,
+        PasterMessageManager $pasterMessageManager,
         Logger $logger
     ) {
         $this->helper = $helper;
@@ -48,6 +52,7 @@ class MainWebsocket
         $this->connectionManager = $connectionManager;
         $this->stateManager = $stateManager;
         $this->syncManager = $syncManager;
+        $this->pasterMessageManager = $pasterMessageManager;
         $this->logger = $logger;
     }
     public function start(Command $context, WebsocketConfig $config, WebsocketConfig $internalConfig)
@@ -85,7 +90,7 @@ class MainWebsocket
 
                 $this->server->loop($read);
                 $this->internal->loop($read);
-                $this->clearBroken();
+                $this->tick();
                 gc_collect_cycles();
             }
         } catch (\Throwable $e) {
@@ -135,17 +140,39 @@ class MainWebsocket
                 if (!$connection->getMeta("internal"))
                     return;
                 $this->handleSync($data);
+            } else if ($data->type == "worker") {
+                if (!$connection->getMeta("internal"))
+                    return;
+                $this->syncManager->addWorker($connection);
+            } else if ($data->type == 'dispatch') {
+                if (!$connection->getMeta("internal"))
+                    return;
+                $ids = $data->ids;
+                if (!is_array($ids))
+                    $ids = [$ids];
+                $this->connectionManager->broadcast($ids, json_encode($data->data));
             } else if ($data->type == 'subscribe') {//Set subscribe.
                 $this->subscribeManager->unsubscribe($id);
                 $paths = $data->path;
                 if (!is_array($paths))
                     $paths = [$paths];
+
+                $restorePaster = false;
+                if (isset($data->restore)) {
+                    if (!$connection->getMeta("hasRestored")) {
+                        $connection->setMeta("hasRestored", true);
+                        $restorePaster = true;
+                    }
+                }
+
                 foreach ($paths as $path) {
                     $path = new ModelPath($path);
                     $r = $this->subscribeManager->subscribe($id, $path);
-
                     if ($r) {
                         $this->logger->debug("Subscribe({$id}):{$path}");
+                        if ($restorePaster) {
+                            $this->pasterMessageManager->sync($path, $data->restore, $id);
+                        }
                     } else {
                         $this->logger->debug("Subscribe({$id}):{$path} rejected.");
                     }
@@ -177,6 +204,12 @@ class MainWebsocket
         $this->logger->debug("Cleaning up: {$id}");
         $this->subscribeManager->unsubscribe($id);
 
+        if ($this->connectionManager->get($id)) {
+            if ($this->connectionManager->get($id)->getMeta("worker")) {
+                $this->syncManager->removeWorker($id);
+            }
+        }
+
         $user_id = $this->connectionManager->user($id);
         if ($user_id) {
             $releases = $this->stateManager->getDisconnectReleased($user_id);
@@ -198,14 +231,17 @@ class MainWebsocket
         } else {
             $this->syncManager->performSync($path);
         }
+        $this->pasterMessageManager->add($path);
     }
 
-    protected function clearBroken()
+    protected function tick()
     {
         $brk = $this->connectionManager->getBroken();
         foreach ($brk as $id) {
             $this->logger->verbose("Clear broken id $id");
             $this->close($id);
         }
+
+
     }
 }

@@ -12,6 +12,7 @@ import FieldSet from "flarum/common/components/FieldSet";
 import SettingsPage from "flarum/forum/components/SettingsPage";
 import Switch from "flarum/common/components/Switch";
 import Button from "flarum/common/components/Button";
+import { addUnread } from "../utils/unreadTip";
 export function initDiscussionList() {
     addSubscribeCb("discussion", (items: ItemList<ModelPath>, context: Record<string, any>) => {
         if (context.discussionList) {
@@ -42,12 +43,19 @@ export function initDiscussionList() {
     function addOne(id: string, title: string, post: number) {
         if ((app.current?.data as any)?.discussion?.id() == id) return;
         let baseCount = 0;
+        let exist = false;
         for (let i = 0; i < comingDiscussions.length; i++) {
             if (comingDiscussions[i].id == id) {
                 baseCount = comingDiscussions[i].count;
                 comingDiscussions.splice(i, 1);
+                exist = true;
                 break;
             }
+        }
+        if (!exist) {
+            const routeName: string = (app.current?.data as any)?.routeName || "";
+            if (routeName !== "discussion" && routeName !== "discussion.near")
+                addUnread();
         }
         comingDiscussions.unshift({
             title: title,

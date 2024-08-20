@@ -28,7 +28,7 @@ return array_merge([
     new Extend\Locales(__DIR__ . '/locale'),
     (new Extend\Console())
         ->command(Console\Serve::class)
-        ->command(Console\SyncModel::class),
+        ->command(Console\Worker::class),
     (new Extend\Routes('api'))
         ->get("/websocket-access-token", 'websocket-access-token.create', Api\Controller\CreateWebsocketAccessTokenController::class)
         ->post("/websocket-access-token", 'websocket-access-token.save', Api\Controller\CreateWebsocketAccessTokenController::class),
@@ -39,6 +39,9 @@ return array_merge([
         ->default("xypp.ws_notification.common.internal_address", "")
         ->default("xypp.ws_notification.common.max_states_hold", 10)
         ->default("xypp.ws_notification.common.max_subscribe_hold", 10)
+        ->default("xypp.ws_notification.paster.max_record_count", 100000)
+        ->default("xypp.ws_notification.paster.max_restore_count", 100)
+        ->default("xypp.ws_notification.paster.max_restore_time", 3600)
         ->default("xypp.ws_notification.websocket.port", 18080)
         ->default("xypp.ws_notification.websocket.address", "0.0.0.0")
         ->default("xypp.ws_notification.websocket.cert", "")

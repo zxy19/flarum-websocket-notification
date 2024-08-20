@@ -13,6 +13,7 @@ use Xypp\WsNotification\Integration\Reaction\ReactionData;
 use Xypp\WsNotification\Websockets\Helper\ConnectionManager;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 use Xypp\WsNotification\Websockets\Helper\Logger;
+use Xypp\WsNotification\Websockets\Helper\PasterMessageManager;
 use Xypp\WsNotification\Websockets\Helper\SubscribeManager;
 use Xypp\WsNotification\Websockets\Helper\StateManager;
 use Xypp\WsNotification\Websockets\Helper\SyncManager;
@@ -51,6 +52,7 @@ class Provider extends AbstractServiceProvider
         $this->container->singleton(StateManager::class);
         $this->container->singleton(SyncManager::class);
         $this->container->singleton(DataDispatchHelper::class);
+        $this->container->singleton(PasterMessageManager::class);
         $this->container->singleton(Logger::class);
     }
 }
