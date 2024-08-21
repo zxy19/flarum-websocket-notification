@@ -24,8 +24,8 @@ export function initNotification() {
     addUnread();
     if (app.session.user)
       app.session.user.pushAttributes({
-        unreadNotificationCount: app.session.user.unreadNotificationCount() ?? 0 + 1,
-        newNotificationCount: app.session.user.newNotificationCount() ?? 0 + 1,
+        unreadNotificationCount: (app.session.user.unreadNotificationCount() ?? 0) + 1,
+        newNotificationCount: (app.session.user.newNotificationCount() ?? 0) + 1,
       });
     m.redraw();
     setTimeout(() => {
