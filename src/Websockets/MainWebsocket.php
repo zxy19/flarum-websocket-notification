@@ -26,6 +26,7 @@ class MainWebsocket
     protected $server;
     protected $internal;
     protected int $id = 0;
+    protected int $lastPing = 0;
     protected array $subscribe = [];
     protected array $middlewares = [];
     protected array $middlewaresInternal = [];
@@ -54,6 +55,7 @@ class MainWebsocket
         $this->syncManager = $syncManager;
         $this->pasterMessageManager = $pasterMessageManager;
         $this->logger = $logger;
+        $this->lastPing = time();
     }
     public function start(Command $context, WebsocketConfig $config, WebsocketConfig $internalConfig)
     {
@@ -255,6 +257,16 @@ class MainWebsocket
         foreach ($brk as $id) {
             $this->logger->verbose("Clear broken id $id");
             $this->close($id);
+        }
+
+        $this->pasterMessageManager->refresh();
+
+        if (time() - $this->lastPing > 60) {
+            $this->lastPing = time();
+            $this->connectionManager->broadcast(null, json_encode([
+                "type" => "ping",
+            ]));
+            $this->logger->verbose("Ping");
         }
     }
 }
