@@ -95,9 +95,10 @@ class SyncManager
             }
         }
     }
-    public function performReleasing(ModelPath $path)
+    public function performReleasing(ModelPath $path, ?array $ids = null)
     {
-        $ids = $this->subscribeManager->collectIdForPath($path);
+        if ($ids === null)
+            $ids = $this->subscribeManager->collectIdForPath($path);
         if (empty($ids)) {
             return;
         }

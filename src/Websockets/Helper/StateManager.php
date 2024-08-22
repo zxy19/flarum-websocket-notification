@@ -67,18 +67,39 @@ class StateManager
             unset($this->user_states[$user_id][$noDataPath]);
         }
     }
-    public function getDisconnectReleased(int $user_id)
+    public function getDisconnectReleased(int $user_id, int $id)
     {
         /**
          * Only Do State Release When All connections are closed.
          */
         if (isset($this->user_connections[$user_id])) {
             $this->user_connections[$user_id]--;
-            if ($this->user_connections[$user_id] > 0) {
-                return [];
-            }
-            unset($this->user_connections[$user_id]);
+        } else {
+            $this->user_connections[$user_id] = 0;
         }
+        if ($this->user_connections[$user_id] > 0) {
+            /**
+             * While not all connections are closed, we will collect all state associated to current connection.
+             */
+            $ret = [];
+            $collectedKeys = [];
+            /**
+             * @var ModelPath $path 
+             */
+            foreach ($this->states[$user_id] as $key => $path) {
+                if ($path->getId("session") == $id) {
+                    $ret[] = $path;
+                    $collectedKeys[] = $key;
+                }
+            }
+            if (count($collectedKeys) > 0) {
+                foreach ($collectedKeys as $key) {
+                    unset($this->states[$user_id][$key]);
+                }
+            }
+            return $ret;
+        }
+        unset($this->user_connections[$user_id]);
 
         /**
          * Release database
@@ -87,7 +108,7 @@ class StateManager
         unset($this->user_states[$user_id]);
 
         /**
-         * Collect State to Release
+         * Collect All State to Release
          */
         if (!isset($this->states[$user_id])) {
             return [];

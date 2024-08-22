@@ -136,22 +136,23 @@ class MainWebsocket
             return;
         try {
             $id = $connection->getMeta('id');
-            if ($data->type == 'sync') {//Internal command.
+            if ($data->type == 'sync') {//Internal command. Send model path to subscriber
                 if (!$connection->getMeta("internal"))
                     return;
-                $this->handleSync($data);
-            } else if ($data->type == "worker") {
+                $path = new ModelPath($data->path);
+                $this->handleSync($path, $id);
+            } else if ($data->type == "worker") {//Internal command. Register worker
                 if (!$connection->getMeta("internal"))
                     return;
                 $this->syncManager->addWorker($connection);
-            } else if ($data->type == 'dispatch') {
+            } else if ($data->type == 'dispatch') {//Internal command. Dispatch data to clients. Called by worker
                 if (!$connection->getMeta("internal"))
                     return;
                 $ids = $data->ids;
                 if (!is_array($ids))
                     $ids = [$ids];
                 $this->connectionManager->broadcast($ids, json_encode($data->data));
-            } else if ($data->type == 'subscribe') {//Set subscribe.
+            } else if ($data->type == 'subscribe') {//Client Command. Update subscribe.
                 $this->subscribeManager->unsubscribe($id);
                 $paths = $data->path;
                 if (!is_array($paths))
@@ -177,23 +178,16 @@ class MainWebsocket
                         $this->logger->debug("Subscribe({$id}):{$path} rejected.");
                     }
                 }
-            } else if ($data->type == 'ping') {
+            } else if ($data->type == 'ping') {//Common command. Ping
                 $connection->send(new WebSocket\Message\Text('{"type":"pong"}'));
-            } else if ($data->type == 'state') {
+            } else if ($data->type == 'state') {//Client command. Set/Unset state
                 $path = new ModelPath($data->path);
                 $userId = $this->connectionManager->user($id);
+                if (!$path->getId("state"))
+                    return;
                 if (!$userId || $userId != $path->getId("state"))
                     return;
-                if ($path->get("release")) {
-                    $path->remove("release");
-                    $this->stateManager->releaseState($userId, $path);
-                    $this->syncManager->performReleasing($path);
-                    $this->logger->verbose("Release({$id}):{$path}");
-                } else {
-                    $this->stateManager->setState(new ModelPath($data->path));
-                    $this->syncManager->performSyncState($path);
-                    $this->logger->verbose("State({$id}):{$path}");
-                }
+                $this->handleSync($path, $id);
             }
         } catch (\Exception $e) {
             $this->logger->warn($e->getMessage());
@@ -212,26 +206,47 @@ class MainWebsocket
 
         $user_id = $this->connectionManager->user($id);
         if ($user_id) {
-            $releases = $this->stateManager->getDisconnectReleased($user_id);
+            $releases = $this->stateManager->getDisconnectReleased($user_id, $id);
+            /**
+             * @var ModelPath $path
+             */
             foreach ($releases as $path) {
-                $this->syncManager->performReleasing($path);
+                $this->handleSync($path->after("state", "release"), $id);
             }
         }
         $this->connectionManager->remove($id);
         $this->logger->verbose("Connection closed: {$id}");
     }
 
-    protected function handleSync($data)
+    protected function handleSync(ModelPath $path, $id)
     {
-        $path = new ModelPath($data->path);
         $this->logger->verbose("sync path:" . $path);
         if ($path->getId("state")) {
-            $this->stateManager->setState($path);
-            $this->syncManager->performSyncState($path);
+            if ($path->get("session")) {
+                if ($this->connectionManager->isInternal($id)) {
+                    $path->remove("session");
+                } else {
+                    $path->setId("session", $id);
+                }
+                $this->logger->verbose("Session associate to $id:" . $path);
+            }
+            if ($path->get("release")) {
+                $path->remove("release");
+                $this->stateManager->releaseState($path->getId("state"), $path);
+                $this->syncManager->performReleasing($path);
+                $this->logger->verbose("Release({$id}):{$path}");
+                $this->pasterMessageManager->add($path->clone()->after("state", "release"));
+            } else {
+                $this->stateManager->setState($path);
+                $this->syncManager->performSyncState($path);
+                $this->logger->verbose("State({$id}):{$path}");
+
+                $this->pasterMessageManager->add($path);
+            }
         } else {
             $this->syncManager->performSync($path);
+            $this->pasterMessageManager->add($path);
         }
-        $this->pasterMessageManager->add($path);
     }
 
     protected function tick()
@@ -241,7 +256,5 @@ class MainWebsocket
             $this->logger->verbose("Clear broken id $id");
             $this->close($id);
         }
-
-
     }
 }

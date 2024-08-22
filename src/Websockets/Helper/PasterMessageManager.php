@@ -41,18 +41,32 @@ class PasterMessageManager
             }
         }
     }
-
+    public function remove(ModelPath $path)
+    {
+        $pathNoData = $path->withoutData()->remove("session");
+        if (isset($this->records[strval($pathNoData)])) {
+            unset($this->records[strval($pathNoData)]);
+            $this->logger->debug("[PasterMessageManager]: Record removed: " . strval($path));
+        }
+    }
     public function add(ModelPath $path)
     {
-        $pathNoData = $path->withoutData();
+        $isRelease = false;
+        if ($path->get("release")) {
+            $isRelease = true;
+            $path = $path->clone()->remove("release");
+        }
+        $pathNoData = $path->withoutData()->remove("session");
+
         if (isset($this->records[strval($pathNoData)])) {
             unset($this->records[strval($pathNoData)]);
         }
         $this->records[strval($pathNoData)] = [
             "path" => $path,
-            "time" => time()
+            "time" => time(),
+            "isRelease" => $isRelease,
         ];
-        $this->logger->debug("[PasterMessageManager]: Record added: " . strval($pathNoData));
+        $this->logger->debug("[PasterMessageManager]: Record added: [" . $pathNoData . "]=" . strval($path));
     }
     public function sync(ModelPath $subscribe, int $time, int $id)
     {
@@ -65,7 +79,19 @@ class PasterMessageManager
             }
             if (PathMatchUtil::match($current["path"], $subscribe)) {
                 $this->logger->verbose("[PasterMessageManager]: Sync paster model: " . strval($current["path"]));
-                $this->syncManager->performSync($current["path"], [$id]);
+                /**
+                 * @var ModelPath $path
+                 */
+                $path = $current["path"];
+                if ($path->get("state")) {
+                    if ($current['isRelease']) {
+                        $this->syncManager->performReleasing($current["path"]);
+                    } else {
+                        $this->syncManager->performSyncState($current["path"], [$id]);
+                    }
+                } else {
+                    $this->syncManager->performSync($current["path"], [$id]);
+                }
             }
             $current = prev($this->records);
         }

@@ -40,7 +40,7 @@ export function initTypingTip() {
             return;
         }
         if (context.discussion) {
-            items.add("typing", new ModelPath().add("state").add("discussion", context.discussion).add("typing"));
+            items.add("typing", new ModelPath().add("state").add("session").add("discussion", context.discussion).add("typing"));
         }
     });
     extend(ComposerBody.prototype, "oninit", function (this: ComposerBody, val: any) {
@@ -54,6 +54,7 @@ export function initTypingTip() {
             WebsocketHelper.getInstance()
                 .state(new ModelPath()
                     .add("state", app.session?.user?.id())
+                    .add("session")
                     .add("discussion", (this.attrs as any).discussion.id())
                     .add("typing")
                 );
@@ -61,6 +62,7 @@ export function initTypingTip() {
             WebsocketHelper.getInstance()
                 .state(new ModelPath()
                     .add("state", app.session?.user?.id())
+                    .add("session")
                     .add("discussion", (this.attrs as any).post.discussion().id())
                     .add("typing")
                 );
@@ -76,6 +78,7 @@ export function initTypingTip() {
             WebsocketHelper.getInstance()
                 .state(new ModelPath()
                     .add("state", app.session?.user?.id())
+                    .add("session")
                     .add("release")
                     .add("discussion", (this.attrs as any).discussion.id())
                     .add("typing")
@@ -84,6 +87,7 @@ export function initTypingTip() {
             WebsocketHelper.getInstance()
                 .state(new ModelPath()
                     .add("state", app.session?.user?.id())
+                    .add("session")
                     .add("release")
                     .add("discussion", (this.attrs as any).post.discussion().id())
                     .add("typing")
@@ -96,7 +100,6 @@ export function initTypingTip() {
         //@ts-ignore
         discussion.typingUsers = [];
         for (const user of typings.user) {
-            if (app.session?.user?.id() == user.data.id) continue;
             let u: User | undefined = app.store.getById<User>("users", user.data.id);
             if (!u) {
                 u = app.store.pushPayload<User>(user);

@@ -47,7 +47,19 @@ class ModelPath implements \Stringable
         $ret->data = null;
         return $ret;
     }
-
+    public function clone(bool $copyData = false)
+    {
+        $ret = new ModelPath();
+        $ret->path = [];
+        $this->each(function ($name, $id) use (&$ret) {
+            $ret->addWithId($name, $id);
+        });
+        if ($copyData)
+            $ret->setData(json_decode(json_encode($this->data)));
+        else
+            $ret->setData($this->data);
+        return $ret;
+    }
     public function add(string $path): ModelPath
     {
         return $this->addWithId($path, null);
@@ -97,6 +109,35 @@ class ModelPath implements \Stringable
             return $tmp["name"];
         }
         return null;
+    }
+    public function setId(?string $type, ?int $id): ModelPath
+    {
+        if (!$type) {
+            $this->path[count($this->path) - 1]["id"] = $id;
+        } else {
+            foreach ($this->path as &$p) {
+                if ($p["name"] == $type) {
+                    $p["id"] = $id;
+                    break;
+                }
+            }
+        }
+        return $this;
+    }
+    public function after(string $after, ?string $type, ?string $id = null)
+    {
+        for ($i = count($this->path) - 1; $i >= 0; $i--) {
+            if ($this->path[$i]["name"] == $after) {
+                array_splice($this->path, $i + 1, 0, [
+                    [
+                        "name" => $type,
+                        "id" => $id
+                    ]
+                ]);
+                break;
+            }
+        }
+        return $this;
     }
     public function getData()
     {
