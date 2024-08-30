@@ -118,7 +118,7 @@ export function initTypingTip() {
 
     extend(SettingsPage.prototype, 'settingsItems', function (items) {
         items.add(
-            'xypp-wsn-newPostOption',
+            'xypp-wsn-typing-option',
             <FieldSet label={app.translator.trans("xypp-websocket-notification.forum.typing.title")} className="Settings-typing">
                 <p><Switch
                     state={((app.session?.user?.preferences() || {})["xyppWsnNoTypeTip"] || false)}
