@@ -19,6 +19,7 @@ export class WebsocketHelper {
     pingInterval?: any;
     nextRetry = 0;
     inRetryStatus = false;
+    sendInConnecting: { [key: string]: any; type: string; }[] = [];
     static instance?: WebsocketHelper;
     public static getInstance(): WebsocketHelper {
         if (!WebsocketHelper.instance) {
@@ -32,6 +33,7 @@ export class WebsocketHelper {
     }
     async start() {
         if (this.app) {
+            this.sendInConnecting = [];
             if (this.ws) {
                 try {
                     this.ws.onclose = () => { }
@@ -68,6 +70,8 @@ export class WebsocketHelper {
                 this.lastSubscribes = [];
                 this.reSubscribe();
                 this.pingInterval = setInterval(this.ping.bind(this), 30000);
+                this.sendInConnecting.forEach(v => this.send(v));
+                this.sendInConnecting = [];
                 if (this.statusChangeCb) this.statusChangeCb("online");
                 this.nextRetry = 0;
                 this.lastConnected = dayjs().unix();
@@ -119,7 +123,15 @@ export class WebsocketHelper {
     }
     send(data: { type: string, [key: string]: any }) {
         if (this.ws) {
-            this.ws.send(JSON.stringify(data));
+            if (this.ws.readyState === WebSocket.CONNECTING) {
+                this.sendInConnecting.push(data);
+            } else if (this.ws.readyState === WebSocket.OPEN) {
+                try {
+                    this.ws.send(JSON.stringify(data));
+                } catch (e) {
+                    console.log(`Error Websocket Sending ${e}`);
+                }
+            }
         }
     }
     onStatusChange(cb: (status: STATUS) => void) {

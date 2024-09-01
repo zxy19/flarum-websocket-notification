@@ -138,7 +138,7 @@ export function initDiscussionList() {
                         type="number"
                         value={((app.session?.user?.preferences() || {})["xyppWsnNewDiscussionListLen"] || 5)}
                     />
-                    <Button onclick={((e: any) => {
+                    <Button className="Button Button--primary" onclick={((e: any) => {
                         e.preventDefault();
                         savingList = true;
                         m.redraw();

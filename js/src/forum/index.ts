@@ -13,7 +13,7 @@ app.initializers.add('xypp/flarum-websocket-notification', () => {
   init();
   setTimeout(() => {
     WebsocketHelper.getInstance().start();
-  }, 1000);
+  }, 0);
   extend(HeaderSecondary.prototype, 'items', function (items) {
     items.add('wsn', ConnectionIndicator.component(), 1000);
   });

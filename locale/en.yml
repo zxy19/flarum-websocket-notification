@@ -65,6 +65,7 @@ xypp-websocket-notification:
       title: "New Discussion"
       auto_refresh: "Auto refresh after 30 seconds"
       list_length: "New discussion list length"
+      list_len_button: "Set Max Length"
     typing:
       title: "正在输入提示"
       no_type_tip: "Don't show type status"

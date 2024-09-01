@@ -65,6 +65,7 @@ xypp-websocket-notification:
       title: "新的讨论贴"
       auto_refresh: "30秒后自动刷新"
       list_length: "展示的新贴列表长度"
+      list_len_button: "设置列表长度"
     typing:
       title: "正在输入提示"
       no_type_tip: "不显示我的输入提示"
