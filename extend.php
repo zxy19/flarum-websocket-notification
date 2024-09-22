@@ -31,7 +31,8 @@ return array_merge([
         ->command(Console\Worker::class),
     (new Extend\Routes('api'))
         ->get("/websocket-access-token", 'websocket-access-token.create', Api\Controller\CreateWebsocketAccessTokenController::class)
-        ->post("/websocket-access-token", 'websocket-access-token.save', Api\Controller\CreateWebsocketAccessTokenController::class),
+        ->post("/websocket-access-token", 'websocket-access-token.save', Api\Controller\CreateWebsocketAccessTokenController::class)
+        ->get("/websocket-test", 'websocket-test', Api\Controller\TestConnection::class),
     (new Extend\ServiceProvider())
         ->register(Provider::class),
     (new Extend\Settings())
@@ -39,6 +40,10 @@ return array_merge([
         ->default("xypp.ws_notification.common.internal_address", "")
         ->default("xypp.ws_notification.common.max_states_hold", 10)
         ->default("xypp.ws_notification.common.max_subscribe_hold", 10)
+        ->default("xypp.ws_notification.common.wait_done", false)
+        ->default("xypp.ws_notification.common.enable", false)
+        ->default("xypp.ws_notification.common.queue", true)
+        ->default("xypp.ws_notification.options.no_state_check", false)
         ->default("xypp.ws_notification.paster.max_record_count", 100000)
         ->default("xypp.ws_notification.paster.max_restore_count", 100)
         ->default("xypp.ws_notification.paster.max_restore_time", 3600)
@@ -51,5 +56,6 @@ return array_merge([
         ->default("xypp.ws_notification.internal.address", "127.0.0.1")
         ->default("xypp.ws_notification.internal.cert", "")
         ->default("xypp.ws_notification.internal.pk", "")
-        ->default("xypp.ws_notification.internal.self-signed", false),
-], require (__DIR__ . "/src/Integration/IntegrationExtend.php"));
+        ->default("xypp.ws_notification.internal.self-signed", false)
+        ->serializeToForum("xyppWsnEnable", "xypp.ws_notification.common.enable"),
+], require(__DIR__ . "/src/Integration/IntegrationExtend.php"));

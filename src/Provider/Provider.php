@@ -12,6 +12,7 @@ use Xypp\WsNotification\Integration\Poll\PollData;
 use Xypp\WsNotification\Integration\Reaction\ReactionData;
 use Xypp\WsNotification\Websockets\Helper\ConnectionManager;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
+use Xypp\WsNotification\Websockets\Helper\JobIdManager;
 use Xypp\WsNotification\Websockets\Helper\Logger;
 use Xypp\WsNotification\Websockets\Helper\PasterMessageManager;
 use Xypp\WsNotification\Websockets\Helper\SubscribeManager;
@@ -53,6 +54,7 @@ class Provider extends AbstractServiceProvider
         $this->container->singleton(SyncManager::class);
         $this->container->singleton(DataDispatchHelper::class);
         $this->container->singleton(PasterMessageManager::class);
+        $this->container->singleton(JobIdManager::class);
         $this->container->singleton(Logger::class);
     }
 }

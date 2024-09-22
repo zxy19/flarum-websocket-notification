@@ -25,7 +25,7 @@ class PostSavingEvent
         $event->post->afterSave(
             function ($post) {
                 if ($this->bridge->check()) {
-                    $this->bridge->sync((new ModelPath())->addWithId("discussion", $post->discussion_id)->addWithId("post", $post->id));
+                    $this->bridge->queue((new ModelPath())->addWithId("discussion", $post->discussion_id)->addWithId("post", $post->id));
                 }
             }
         );

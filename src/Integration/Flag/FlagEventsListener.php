@@ -30,7 +30,7 @@ class FlagEventsListener
             return;
         if (!$this->settings->get("xypp.ws_notification.function.flag"))
             return;
-        $this->bridge->sync(
+        $this->bridge->queue(
             (new ModelPath())
                 ->addWithId("flag", $event->flag->id)
                 ->setData(["delete" => false])
@@ -43,7 +43,7 @@ class FlagEventsListener
             return;
         if (!$this->settings->get("xypp.ws_notification.function.flag"))
             return;
-        $this->bridge->sync(
+        $this->bridge->queue(
             (new ModelPath())
                 ->addWithId("flag", $event->flag->id)
                 ->setData(["delete" => true])

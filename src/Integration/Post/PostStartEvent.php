@@ -34,7 +34,7 @@ class PostStartEvent
         }
         if ($show) {
             if ($this->bridge->check()) {
-                $this->bridge->sync((new ModelPath())->addWithId("discussion", $post->discussion_id)->setData([
+                $this->bridge->queue((new ModelPath())->addWithId("discussion", $post->discussion_id)->setData([
                     "post" => $post->id
                 ]));
             }
@@ -43,7 +43,7 @@ class PostStartEvent
                 if (count($tags)) {
                     foreach ($tags as $tag) {
                         if ($this->bridge->check()) {
-                            $this->bridge->sync(
+                            $this->bridge->queue(
                                 (new ModelPath())
                                     ->addWithId("tag", $tag->id)
                                     ->addWithId("discussion", $post->discussion_id)
@@ -60,7 +60,7 @@ class PostStartEvent
             if ($this->settings->get("xypp.ws_notification.function.flag")) {
                 $flag = Flag::where("post_id", $post->id)->orderByDesc("id")->first();
                 if ($flag) {
-                    $this->bridge->sync((new ModelPath())->addWithId("flag", $flag->id)->setData([
+                    $this->bridge->queue((new ModelPath())->addWithId("flag", $flag->id)->setData([
                         "post" => $post->id
                     ]));
                 }

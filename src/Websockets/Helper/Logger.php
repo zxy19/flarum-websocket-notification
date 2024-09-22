@@ -18,11 +18,11 @@ class Logger implements LoggerInterface
     }
     public function info($message, array $context = [])
     {
-        $this->commandContext->info($message);
+        $this->commandContext->info($message, "v");
     }
     public function verbose($message)
     {
-        $this->commandContext->info($message, "v");
+        $this->commandContext->info($message, "vv");
     }
     public function warn($message)
     {
@@ -60,5 +60,9 @@ class Logger implements LoggerInterface
     function warning($message, array $context = [])
     {
         $this->warn($message);
+    }
+    function tip($message)
+    {
+        $this->info($message);
     }
 }

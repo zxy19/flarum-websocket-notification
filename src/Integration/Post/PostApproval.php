@@ -22,7 +22,7 @@ class PostApproval
     {
         $post = $event->post;
         if ($this->bridge->check()) {
-            $this->bridge->sync((new ModelPath())->addWithId("discussion", $post->discussion_id)->setData([
+            $this->bridge->queue((new ModelPath())->addWithId("discussion", $post->discussion_id)->setData([
                 "post" => $post->id
             ]));
         }
@@ -31,7 +31,7 @@ class PostApproval
             if (count($tags)) {
                 foreach ($tags as $tag) {
                     if ($this->bridge->check()) {
-                        $this->bridge->sync(
+                        $this->bridge->queue(
                             (new ModelPath())
                                 ->addWithId("tag", $tag->id)
                                 ->addWithId("discussion", $post->discussion_id)

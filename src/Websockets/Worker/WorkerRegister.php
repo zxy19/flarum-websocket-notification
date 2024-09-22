@@ -16,13 +16,14 @@ class WorkerRegister
         $this->id = $connection->getMeta("id");
         $this->alive = $connection->isConnected();
     }
-    public function dispatch(ModelPath $modelPath, array $idGrped, bool $isState)
+    public function dispatch(ModelPath $modelPath, array $idGrped, bool $isState, int $job_id)
     {
         $this->connection->send(new Text(json_encode([
             "type" => "job",
             "ids" => $idGrped,
             "state" => $isState,
-            "path" => strval($modelPath)
+            "path" => strval($modelPath),
+            "job_id" => $job_id
         ])));
     }
     public function stop()

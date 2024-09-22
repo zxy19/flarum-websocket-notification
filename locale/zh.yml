@@ -3,9 +3,17 @@ xypp-websocket-notification:
     not-running: "Websocket服务未运行"
   admin:
     settings:
+      test:
+        test: "测试连接"
+        test_server: "测试内部连接"
+        success: "连接成功"
+        fail: "连接失败"
       common:
         title: 通用
         desc: 通用设置
+        enable: 启用
+        queue: "使用队列任务"
+        wait_done: "等待分发完成，如果使用队列，建议开启此选项。"
         public_address: 外网连接地址
         internal_address: fpm进程可连接的内部地址.
         max_subscribe_hold: 单个连接最大持有的订阅地址数
@@ -25,6 +33,7 @@ xypp-websocket-notification:
         title: 选项
         desc: 功能的设置选项
         typing_limit: 最大的显示输入提示数
+        no_state_check: 连接前不检查服务器状态(可降低服务器负载)
       paster:
         title: 历史记录器
         desc: 历史记录器(Paster)会记录一段时间内同步的所有模型路径，并在用户连接恢复的时候重新发送给用户

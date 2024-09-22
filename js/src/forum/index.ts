@@ -15,6 +15,9 @@ app.initializers.add('xypp/flarum-websocket-notification', () => {
     WebsocketHelper.getInstance().start();
   }, 0);
   extend(HeaderSecondary.prototype, 'items', function (items) {
+    if (!app.forum.attribute<boolean>("xyppWsnEnable")) {
+      return;
+    }
     items.add('wsn', ConnectionIndicator.component(), 1000);
   });
   initUnreadTip();

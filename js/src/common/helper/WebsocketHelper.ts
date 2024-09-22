@@ -31,8 +31,17 @@ export class WebsocketHelper {
         this.app = app;
         this.lastConnected = dayjs().unix() - 5;
     }
+    stop() {
+        try {
+            this.ws?.close();
+            this.ws = undefined;
+        } catch (e) { }
+    }
     async start() {
         if (this.app) {
+            if (!this.app.forum.attribute<boolean>("xyppWsnEnable")) {
+                return;
+            }
             this.sendInConnecting = [];
             if (this.ws) {
                 try {

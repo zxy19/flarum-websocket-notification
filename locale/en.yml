@@ -3,9 +3,17 @@ xypp-websocket-notification:
     not-running: "Websocket server is not running."
   admin:
     settings:
+      test:
+        test: "Test Connection"
+        test_server: "Test Internal Connection"
+        success: "Success"
+        fail: "Fail"
       common:
         title: Common
         desc: The common settings.
+        enable: Enable
+        queue: "Use queued job"
+        wait_done: "Wait until all models are dispatched. Suggest to be on when using queue."
         public_address: The address to connect.
         internal_address: The address to connect for fpm.
         max_subscribe_hold: Max subscribe path can one connection hold.
@@ -25,6 +33,7 @@ xypp-websocket-notification:
         title: Options
         desc: The function's options.
         typing_limit: Max count of displaying typing tip.
+        no_state_check: No check state before connecting(Maybe improve performance)
       paster:
         title: History Recorder
         desc: The history recorder(Paster) will record the sync path of the models during a period of time, and then restore the path to the user when the user reconnects.

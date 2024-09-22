@@ -31,7 +31,7 @@ class LikeEventsListener
             return;
         if (!$this->settings->get("xypp.ws_notification.function.like"))
             return;
-        $this->bridge->sync(
+        $this->bridge->queue(
             (new ModelPath())
                 ->addWithId("discussion", $event->post->discussion_id)
                 ->addWithId("post", $event->post->id)
@@ -46,7 +46,7 @@ class LikeEventsListener
             return;
         if (!$this->settings->get("xypp.ws_notification.function.like"))
             return;
-        $this->bridge->sync(
+        $this->bridge->queue(
             (new ModelPath())
                 ->addWithId("discussion", $event->post->discussion_id)
                 ->addWithId("post", $event->post->id)

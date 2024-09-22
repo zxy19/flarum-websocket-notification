@@ -100,6 +100,10 @@ class Worker
                     }
                 );
             }
+            $this->connection->send(new Text(json_encode([
+                "type" => "job_done",
+                "job_id" => $data->job_id
+            ])));
         }
     }
 }

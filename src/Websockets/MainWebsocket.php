@@ -9,6 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use WebSocket;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Data\WebsocketConfig;
+use Xypp\WsNotification\Websockets\Helper\JobIdManager;
 use Xypp\WsNotification\Websockets\Helper\Logger;
 use Xypp\WsNotification\Websockets\Helper\PasterMessageManager;
 use Xypp\WsNotification\Websockets\Helper\WorkerManager;
@@ -39,6 +40,7 @@ class MainWebsocket
     protected SyncManager $syncManager;
     protected PasterMessageManager $pasterMessageManager;
     protected Logger $logger;
+    protected JobIdManager $jobIdManager;
     public function __construct(
         DataDispatchHelper $helper,
         SubscribeManager $subscribeManager,
@@ -46,6 +48,7 @@ class MainWebsocket
         StateManager $stateManager,
         SyncManager $syncManager,
         PasterMessageManager $pasterMessageManager,
+        JobIdManager $jobIdManager,
         Logger $logger
     ) {
         $this->helper = $helper;
@@ -54,6 +57,7 @@ class MainWebsocket
         $this->stateManager = $stateManager;
         $this->syncManager = $syncManager;
         $this->pasterMessageManager = $pasterMessageManager;
+        $this->jobIdManager = $jobIdManager;
         $this->logger = $logger;
         $this->lastPing = time();
     }
@@ -68,8 +72,8 @@ class MainWebsocket
         $this->registerServerCallbacks($this->server);
         $this->registerServerCallbacks($this->internal);
 
-        $this->logger->info("Starting server on {$config->address}:{$config->port}");
-        $this->logger->info("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
+        $this->logger->tip("Starting server on {$config->address}:{$config->port}");
+        $this->logger->tip("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
         try {
             while (true) {
                 if (!$this->server->isRunning()) {
@@ -154,6 +158,15 @@ class MainWebsocket
                 if (!is_array($ids))
                     $ids = [$ids];
                 $this->connectionManager->broadcast($ids, json_encode($data->data));
+            } else if ($data->type == 'job_done') {
+                if (!$connection->getMeta("internal"))
+                    return;
+                $this->jobIdManager->doneJobId($data->job_id);
+                $this->syncManager->jobDone($data->job_id);
+            } else if ($data->type == 'waitAll') {
+                if (!$connection->getMeta("internal"))
+                    return;
+                $this->jobIdManager->setWaitJobs($id, $data->jobs);
             } else if ($data->type == 'subscribe') {//Client Command. Update subscribe.
                 $this->subscribeManager->unsubscribe($id);
                 $paths = $data->path;
@@ -199,6 +212,7 @@ class MainWebsocket
     {
         $this->logger->debug("Cleaning up: {$id}");
         $this->subscribeManager->unsubscribe($id);
+        $this->jobIdManager->clearForConnection($id);
 
         if ($this->connectionManager->get($id)) {
             if ($this->connectionManager->get($id)->getMeta("worker")) {
@@ -222,6 +236,7 @@ class MainWebsocket
 
     protected function handleSync(ModelPath $path, $id)
     {
+        $jobId = $this->jobIdManager->getJobId($id);
         $this->logger->verbose("sync path:" . $path);
         if ($path->getId("state")) {
             if ($path->get("session")) {
@@ -235,18 +250,18 @@ class MainWebsocket
             if ($path->get("release")) {
                 $path->remove("release");
                 $this->stateManager->releaseState($path->getId("state"), $path);
-                $this->syncManager->performReleasing($path);
+                $this->syncManager->performReleasing($path, null, $jobId);
                 $this->logger->verbose("Release({$id}):{$path}");
                 $this->pasterMessageManager->add($path->clone()->after("state", "release"));
             } else {
                 $this->stateManager->setState($path);
-                $this->syncManager->performSyncState($path);
+                $this->syncManager->performSyncState($path, null, $jobId);
                 $this->logger->verbose("State({$id}):{$path}");
 
                 $this->pasterMessageManager->add($path);
             }
         } else {
-            $this->syncManager->performSync($path);
+            $this->syncManager->performSync($path, null, $jobId);
             $this->pasterMessageManager->add($path);
         }
     }

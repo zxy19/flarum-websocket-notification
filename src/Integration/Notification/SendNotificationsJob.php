@@ -33,7 +33,7 @@ class SendNotificationsJob extends AbstractJob
         foreach ($this->recipients as $user) {
             if ($user->shouldAlert($this->blueprint::getType())) {
                 if ($bridge->check()) {
-                    $bridge->sync(
+                    $bridge->queue(
                         (new ModelPath())->addWithId("notification", $user->id)->setData([
                             'type' => $this->blueprint::getType(),
                             'from_user_id' => ($fromUser = $this->blueprint->getFromUser()) ? $fromUser->id : null,

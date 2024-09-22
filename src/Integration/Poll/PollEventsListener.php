@@ -32,6 +32,6 @@ class PollEventsListener
             return;
         if (!$this->settings->get("xypp.ws_notification.function.poll"))
             return;
-        $this->bridge->sync((new ModelPath())->addWithId("poll", $event->poll->id));
+        $this->bridge->queue((new ModelPath())->addWithId("poll", $event->poll->id));
     }
 }
