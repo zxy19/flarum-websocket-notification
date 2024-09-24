@@ -29,6 +29,9 @@ class ConnectionManager
         $url = $request->getUri();
         $code = $url->getPath();
         $code = trim($code, '/?#\\:=');
+        if (str_contains($code, "/")) {
+            $code = array_pop(explode("/", $code));
+        }
         $this->id++;
         $id = $this->id;
         $connection->setMeta('id', $this->id);
