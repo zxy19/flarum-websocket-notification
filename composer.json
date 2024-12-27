@@ -10,7 +10,7 @@
         "flarum/core": "^1.2.0",
         "cboden/ratchet": "^0.4.4",
         "ratchet/pawl": "^0.4.1",
-        "react/async": "*"
+        "react/async": "3.2.0"
     },
     "authors": [
         {
