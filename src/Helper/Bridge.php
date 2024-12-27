@@ -47,7 +47,7 @@ class Bridge
         }
         return true;
     }
-    
+
     /**
      * Execute send jobs
      * @return bool
@@ -58,8 +58,8 @@ class Bridge
         if (!$this->settings->get("xypp.ws_notification.common.enable"))
             return false;
         // If queue is enabled, push jobs to queue
-        if($this->settings->get("xypp.ws_notification.common.queue") && !$this->noQueue){
-            foreach($this->jobs as $_job) {
+        if ($this->settings->get("xypp.ws_notification.common.queue") && !$this->noQueue) {
+            foreach ($this->jobs as $_job) {
                 [$type, $data] = $_job;
                 if ($type === "sync") {
                     $this->queue->push(new SyncModelJob($data));
@@ -72,51 +72,55 @@ class Bridge
         $uri = AddrUtil::getAddr($this->settings, $token, true);
         $done = false;
         try {
-            $loop = \React\EventLoop\Factory::create();
-            await(
-                \Ratchet\Client\connect($uri, [], [], $loop)
-                    ->then(function (\Ratchet\Client\WebSocket $conn) use ($loop, &$done) {
-                        // Just return with done if no jobs
-                        if (count($this->jobs) === 0) {
-                            $done = true;
-                            $conn->close();
-                        }
+            $reactConnector = new \React\Socket\Connector([
+                'timeout' => 10
+            ]);
+            $loop = \React\EventLoop\Loop::get();
+            $connector = new \Ratchet\Client\Connector($loop, $reactConnector);
 
-                        // Handle done
-                        $conn->on('message', function (\Ratchet\RFC6455\Messaging\MessageInterface $msg) use ($conn, &$done) {
-                            $data = json_decode($msg->getContents());
-                            if ($data->type == "done") {
-                                $conn->close();
-                                $done = true;
+            $connector($uri)
+                ->then(function (\Ratchet\Client\WebSocket $conn) use ($loop, &$done) {
+                    // Just return with done if no jobs
+                    if (count($this->jobs) === 0) {
+                        $done = true;
+                        $conn->close();
+                    }
+
+                    // Handle done
+                    $conn->on('message', function (\Ratchet\RFC6455\Messaging\MessageInterface $msg) use ($conn, &$done) {
+                        $data = json_decode($msg->getContents());
+                        if ($data->type == "done") {
+                            $conn->close();
+                            $done = true;
+                        }
+                    });
+
+                    // Send jobs, count how many jobs are sent
+                    $sentJob = 0;
+                    foreach ($this->jobs as $_job) {
+                        [$type, $data] = $_job;
+                        if ($type === "sync") {
+                            if ($this->_sync($conn, $data)) {
+                                $sentJob++;
                             }
+                        }
+                    }
+
+                    // If timeout is set, wait for all jobs to be done
+                    if ($this->timeout) {
+                        $conn->send(json_encode([
+                            "type" => "waitAll",
+                            "jobs" => $sentJob
+                        ]));
+                        $loop->addTimer($this->timeout, function () use ($conn) {
+                            $conn->close();
                         });
-
-                        // Send jobs, count how many jobs are sent
-                        $sentJob = 0;
-                        foreach ($this->jobs as $_job) {
-                            [$type, $data] = $_job;
-                            if ($type === "sync") {
-                                if ($this->_sync($conn, $data)) {
-                                    $sentJob++;
-                                }
-                            }
-                        }
-
-                        // If timeout is set, wait for all jobs to be done
-                        if ($this->timeout) {
-                            $conn->send(json_encode([
-                                "type" => "waitAll",
-                                "jobs" => $sentJob
-                            ]));
-                            $loop->addTimer($this->timeout, function () use ($conn) {
-                                $conn->close();
-                            });
-                        } else {
-                            $conn->close();
-                            $done = true;
-                        }
-                    })
-            );
+                    } else {
+                        $conn->close();
+                        $done = true;
+                    }
+                });
+            $loop->run();
         } catch (\Exception $e) {
             return false;
         } finally {

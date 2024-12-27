@@ -29,36 +29,42 @@ class Worker
     {
         $this->logger->setCommandContext($context);
         $token = WebsocketAccessToken::generate(null, 10, true);
-        $uri = new Uri(AddrUtil::getAddr($this->settings, $token, true));
-        $loop = \React\EventLoop\Factory::create();
-        await(
-            \Ratchet\Client\connect($uri, [], [], $loop)
-                ->then(function (WebSocket $connection) use ($loop) {
-                    $this->logger->verbose("Connected");
-                    $connection->send(json_encode([
-                        "type" => "worker"
-                    ]));
-                    $connection->on("close", function () {
-                        $this->logger->error("Connection closed");
-                    });
-                    $connection->on(
-                        "message",
-                        function (\Ratchet\RFC6455\Messaging\MessageInterface $message) use ($connection) {
-                            $this->message($connection, $message);
-                        }
-                    );
-                    $loop->addPeriodicTimer(
-                        30,
-                        function () use ($connection) {
-                            $connection->send(json_encode([
-                                "type" => "ping"
-                            ]));
-                        }
-                    );
-                })
-        );
+        $uri = AddrUtil::getAddr($this->settings, $token, true);
+        $reactConnector = new \React\Socket\Connector([
+            'timeout' => 10
+        ]);
+        $loop = \React\EventLoop\Loop::get();
+        $connector = new \Ratchet\Client\Connector($loop, $reactConnector);
+
+        $connector($uri)
+            ->then(function (WebSocket $connection) use ($loop) {
+                $this->logger->verbose("Connected");
+                $connection->send(json_encode([
+                    "type" => "worker"
+                ]));
+                $connection->on("close", function () use ($loop) {
+                    $this->logger->error("Connection closed");
+                    $loop->stop();
+                });
+                $connection->on(
+                    "message",
+                    function (\Ratchet\RFC6455\Messaging\MessageInterface $message) use ($connection) {
+                        $this->message($connection, $message);
+                    }
+                );
+                $loop->addPeriodicTimer(
+                    30,
+                    function () use ($connection) {
+                        $connection->send(json_encode([
+                            "type" => "ping"
+                        ]));
+                    }
+                );
+            });
+
+        $loop->run();
     }
-    public function message($connection,string $message)
+    public function message($connection, string $message)
     {
         $data = json_decode($message);
         if (!$data)
