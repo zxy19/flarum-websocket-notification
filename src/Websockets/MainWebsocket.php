@@ -86,24 +86,20 @@ class MainWebsocket
             );
         if ($config->cert)
             $server = new SecureServer($server, $loop, [
-                'ssl' => [
-                    'local_cert' => $config->cert,
-                    'local_pk' => $config->pk,
-                    'allow_self_signed' => $config->selfSigned,
-                    'verify_peer' => false,
-                ]
+                'local_cert' => $config->cert,
+                'local_pk' => $config->pk,
+                'allow_self_signed' => $config->selfSigned,
+                'verify_peer' => false,
             ]);
         $mainApp = new IoServer($app, $server, $loop);
 
         $internalSocket = new Server($internalConfig->getAddrPort(), $loop);
         if ($internalConfig->cert) {
             $internalSocket = new SecureServer($internalSocket, $loop, [
-                'ssl' => [
-                    'local_cert' => $internalConfig->cert,
-                    'local_pk' => $internalConfig->pk,
-                    'allow_self_signed' => $internalConfig->selfSigned,
-                    'verify_peer' => false,
-                ]
+                'local_cert' => $internalConfig->cert,
+                'local_pk' => $internalConfig->pk,
+                'allow_self_signed' => $internalConfig->selfSigned,
+                'verify_peer' => false,
             ]);
         }
         $internalSocket->on("connection", [$mainApp, "handleConnect"]);
