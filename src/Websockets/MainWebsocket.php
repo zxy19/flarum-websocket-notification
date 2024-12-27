@@ -81,7 +81,7 @@ class MainWebsocket
         );
         $server =
             new Server(
-                $config->getUri(),
+                $config->getAddrPort(),
                 $loop
             );
         if ($config->cert)
@@ -95,7 +95,7 @@ class MainWebsocket
             ]);
         $mainApp = new IoServer($app, $server, $loop);
 
-        $internalSocket = new Server($internalConfig->getUri(), $loop);
+        $internalSocket = new Server($internalConfig->getAddrPort(), $loop);
         if ($internalConfig->cert) {
             $internalSocket = new SecureServer($internalSocket, $loop, [
                 'ssl' => [
@@ -108,8 +108,8 @@ class MainWebsocket
         }
         $internalSocket->on("connection", [$mainApp, "handleConnect"]);
 
-        $this->logger->tip("Starting server on {$config->getUri()}");
-        $this->logger->tip("Starting internal server on {$internalConfig->getUri()}");
+        $this->logger->tip("Starting server on {$config->getAddrPort()}");
+        $this->logger->tip("Starting internal server on {$internalConfig->getAddrPort()}");
 
         $mainApp->run();
     }
