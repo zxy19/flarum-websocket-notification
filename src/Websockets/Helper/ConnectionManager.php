@@ -4,10 +4,12 @@ namespace Xypp\WsNotification\Websockets\Helper;
 
 use Flarum\User\Guest;
 use Flarum\User\User;
+use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ServerRequestInterface;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 use Xypp\WsNotification\WebsocketAccessToken;
 use Websocket;
+use Xypp\WsNotification\Websockets\Socket\Connection;
 
 class ConnectionManager
 {
@@ -24,13 +26,14 @@ class ConnectionManager
         $this->helper = $helper;
         $this->logger = $logger;
     }
-    public function add(WebSocket\Connection $connection, ServerRequestInterface $request): int
+    public function add(Connection $connection, Request $request): int
     {
         $url = $request->getUri();
         $code = $url->getPath();
         $code = trim($code, '/?#\\:=');
         if (str_contains($code, "/")) {
-            $code = array_pop(explode("/", $code));
+            $explodes = explode("/", $code);
+            $code = array_pop($explodes);
         }
         $this->id++;
         $id = $this->id;
@@ -63,7 +66,7 @@ class ConnectionManager
         if (isset($this->id2user_obj[$id]))
             unset($this->id2user_obj[$id]);
     }
-    public function get($id): ?\WebSocket\Connection
+    public function get($id): ?Connection
     {
         if (!isset($this->connections[$id])) {
             return null;
@@ -88,7 +91,7 @@ class ConnectionManager
         if ($connection) {
             for ($i = 0; $i < self::RETRY_CNT; $i++) {
                 try {
-                    $connection->send(new WebSocket\Message\Text($data));
+                    $connection->send($data);
                     break;
                 } catch (\Exception $e) {
                     if ($i == self::RETRY_CNT - 1) {

@@ -2,10 +2,14 @@
 
 namespace Xypp\WsNotification\Websockets;
 
-use Flarum\Http\RequestUtil;
-use Phrity\Net\SocketServer;
-use Phrity\Net\Uri;
-use Psr\Http\Message\ServerRequestInterface;
+use Ratchet\ConnectionInterface;
+use Ratchet\Http\HttpServer;
+use Ratchet\Server\IoServer;
+use Ratchet\WebSocket\WsServer;
+use React\EventLoop\Factory;
+use React\Socket\SecureServer;
+use React\Socket\Server;
+use React\Socket\TcpServer;
 use WebSocket;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Data\WebsocketConfig;
@@ -13,6 +17,8 @@ use Xypp\WsNotification\Websockets\Helper\JobIdManager;
 use Xypp\WsNotification\Websockets\Helper\Logger;
 use Xypp\WsNotification\Websockets\Helper\PasterMessageManager;
 use Xypp\WsNotification\Websockets\Helper\WorkerManager;
+use Xypp\WsNotification\Websockets\Socket\Connection;
+use Xypp\WsNotification\Websockets\Socket\Events;
 use Xypp\WsNotification\Websockets\Util\ServerUtil;
 use Xypp\WsNotification\Websockets\Class\WebsocketServerSplit;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
@@ -67,60 +73,52 @@ class MainWebsocket
         $this->connectionManager->clear();
         $this->logger->setCommandContext($context);
         $this->logger->info("Preparing server...");
-        $this->server = ServerUtil::makeServer($config);
-        $this->internal = ServerUtil::makeServer($internalConfig);
-        $this->registerServerCallbacks($this->server);
-        $this->registerServerCallbacks($this->internal);
+        $loop = Factory::create();
+        $app = new HttpServer(
+            new WsServer(
+                $this->createEvent()
+            )
+        );
+        $server =
+            new Server(
+                $config->getUri(),
+                $loop
+            );
+        if ($config->cert)
+            $server = new SecureServer($server, $loop, [
+                'ssl' => [
+                    'local_cert' => $config->cert,
+                    'local_pk' => $config->pk,
+                    'allow_self_signed' => $config->selfSigned,
+                    'verify_peer' => false,
+                ]
+            ]);
+        $mainApp = new IoServer($app, $server, $loop);
 
-        $this->logger->tip("Starting server on {$config->address}:{$config->port}");
-        $this->logger->tip("Starting internal server on {$internalConfig->address}:{$internalConfig->port}");
-        try {
-            while (true) {
-                if (!$this->server->isRunning()) {
-                    $this->logger->warn("Server is not running, restarting...");
-                    $this->server->start();
-                }
-                if (!$this->internal->isRunning()) {
-                    $this->logger->warn("Internal server is not running, restarting...");
-                    $this->internal->start();
-                }
-                $read = [];
-                if ($this->server->isRunning())
-                    $read = array_merge($read, $this->server->collect());
-                if ($this->internal->isRunning())
-                    $read = array_merge($read, $this->internal->collect());
-                if (!empty($read)) {
-                    $write = $oob = [];
-                    stream_select($read, $write, $oob, 5);
-                }
-
-                $this->server->loop($read);
-                $this->internal->loop($read);
-                $this->tick();
-                gc_collect_cycles();
-            }
-        } catch (\Throwable $e) {
-            $this->logger->error($e->getTraceAsString());
-            $this->logger->error($e->getMessage());
+        $internalSocket = new Server($internalConfig->getUri(), $loop);
+        if ($internalConfig->cert) {
+            $internalSocket = new SecureServer($internalSocket, $loop, [
+                'ssl' => [
+                    'local_cert' => $internalConfig->cert,
+                    'local_pk' => $internalConfig->pk,
+                    'allow_self_signed' => $internalConfig->selfSigned,
+                    'verify_peer' => false,
+                ]
+            ]);
         }
+        $internalSocket->on("connection", [$mainApp, "handleConnect"]);
+
+        $this->logger->tip("Starting server on {$config->getUri()}");
+        $this->logger->tip("Starting internal server on {$internalConfig->getUri()}");
+
+        $mainApp->run();
     }
-    public function registerServerCallbacks(WebsocketServerSplit $server)
+    public function createEvent(): Events
     {
-        $server
-            ->setLogger($this->logger);
-        $server
-            ->onText(function (WebsocketServerSplit $server, WebSocket\Connection $connection, WebSocket\Message\Message $message) {
-                $this->message($server, $connection, $message);
-            })
-            ->onClose(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
-                $this->close($connection->getMeta("id"));
-            })
-            ->onError(function ($server, $connection, \Throwable $e) {
-                $this->logger->error("{$e->getMessage()}");
-                $this->logger->error("{$e->getTraceAsString()}");
-            })
-            ->onConnect(function (WebsocketServerSplit $server, WebSocket\Connection $connection) {
-                $id = $this->connectionManager->add($connection, $connection->getHandshakeRequest());
+        return new Events(
+            function (ConnectionInterface $conn) {
+                $connection = Connection::fromSocket($conn);
+                $id = $this->connectionManager->add($connection, $conn->httpRequest);
                 if (!$id) {
                     $connection->close();
                     return;
@@ -131,13 +129,28 @@ class MainWebsocket
                 }
                 $this->helper->connected($id);
                 $this->logger->verbose("Connection opened: {$connection->getMeta('id')}");
-            })
-            ->start();
+            },
+            function (ConnectionInterface $conn, $message) {
+                $connection = Connection::fromSocket($conn);
+                $this->message($connection, $message);
+            },
+            function (ConnectionInterface $conn) {
+                $connection = Connection::fromSocket($conn);
+                $connection->setClosed();
+                $this->close($connection->getMeta('id'));
+            },
+            function ($connection, $e) {
+                $connection = Connection::fromSocket($connection);
+                $connection->close();
+                $this->logger->error("{$e->getMessage()}");
+                $this->logger->error("{$e->getTraceAsString()}");
+            }
+        );
     }
-    public function message(WebsocketServerSplit $server, WebSocket\Connection $connection, WebSocket\Message\Message $message)
+    public function message(Connection $connection, string $message)
     {
-        $this->logger->debug("Message({$connection->getMeta('id')}): {$message->getContent()}");
-        $data = json_decode($message->getContent());
+        $this->logger->debug("Message({$connection->getMeta('id')}): {$message}");
+        $data = json_decode($message);
         if (!$data)
             return;
         try {
@@ -194,7 +207,7 @@ class MainWebsocket
                     }
                 }
             } else if ($data->type == 'ping') {//Common command. Ping
-                $connection->send(new WebSocket\Message\Text('{"type":"pong"}'));
+                $connection->send('{"type":"pong"}');
             } else if ($data->type == 'state') {//Client command. Set/Unset state
                 $path = new ModelPath($data->path);
                 $userId = $this->connectionManager->user($id);
@@ -230,14 +243,14 @@ class MainWebsocket
                 $this->handleSync($path->after("state", "release"), $id);
             }
         }
-        $this->connectionManager->remove($id);
+        $this->connectionManager->remove(id: $id);
         $this->logger->verbose("Connection closed: {$id}");
     }
 
     protected function handleSync(ModelPath $path, $id)
     {
         $jobId = $this->jobIdManager->getJobId($id);
-        $this->logger->verbose("sync path:" . $path);
+        $this->logger->verbose(message: "sync path:" . $path);
         if ($path->getId("state")) {
             if ($path->get("session")) {
                 if ($this->connectionManager->isInternal($id)) {
@@ -251,7 +264,7 @@ class MainWebsocket
                 $path->remove("release");
                 $this->stateManager->releaseState($path->getId("state"), $path);
                 $this->syncManager->performReleasing($path, null, $jobId);
-                $this->logger->verbose("Release({$id}):{$path}");
+                $this->logger->verbose(message: "Release({$id}):{$path}");
                 $this->pasterMessageManager->add($path->clone()->after("state", "release"));
             } else {
                 $this->stateManager->setState($path);

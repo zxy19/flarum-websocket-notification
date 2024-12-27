@@ -21,12 +21,9 @@ class SyncModelJob extends AbstractJob
         if (!$settings->get("xypp.ws_notification.common.enable")) {
             return;
         }
-        if ($bridge->check()) {
-            $bridge->sync($this->path);
-            if ($settings->get("xypp.ws_notification.common.wait_done") ?? false)
-                $bridge->waitAll();
-        } else {
-            throw new ValidationException(["msg" => "websocket is not ready"]);
-        }
+        $bridge->sync($this->path)
+            ->noQueue()
+            ->autoWait()
+            ->exec();
     }
 }

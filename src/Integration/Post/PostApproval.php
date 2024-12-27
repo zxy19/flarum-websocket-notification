@@ -21,27 +21,24 @@ class PostApproval
     public function __invoke(PostWasApproved $event)
     {
         $post = $event->post;
-        if ($this->bridge->check()) {
-            $this->bridge->queue((new ModelPath())->addWithId("discussion", $post->discussion_id)->setData([
-                "post" => $post->id
-            ]));
-        }
+        $this->bridge->sync((new ModelPath())->addWithId("discussion", $post->discussion_id)->setData([
+            "post" => $post->id
+        ]));
         if ($this->extensionManager->isEnabled("flarum-tags")) {
             $tags = $post->discussion->tags;
             if (count($tags)) {
                 foreach ($tags as $tag) {
-                    if ($this->bridge->check()) {
-                        $this->bridge->queue(
-                            (new ModelPath())
-                                ->addWithId("tag", $tag->id)
-                                ->addWithId("discussion", $post->discussion_id)
-                                ->setData([
-                                    "post" => $post->id
-                                ])
-                        );
-                    }
+                    $this->bridge->sync(
+                        (new ModelPath())
+                            ->addWithId("tag", $tag->id)
+                            ->addWithId("discussion", $post->discussion_id)
+                            ->setData([
+                                "post" => $post->id
+                            ])
+                    );
                 }
             }
         }
+        $this->bridge->autoWait()->exec();
     }
 }

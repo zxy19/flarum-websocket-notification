@@ -24,13 +24,13 @@ class WebsocketAccessToken extends AbstractModel implements \Stringable
     {
         return $this->token;
     }
-    public static function generate(?User $user = null, int $expire = 10, bool $su = false)
+    public static function generate(?User $user = null, int $expire = 10, bool $internal = false)
     {
         $token = new static;
         $token->user_id = ($user && !$user->isGuest()) ? $user->id : null;
         $token->token = md5(bin2hex(random_bytes(32)) . time() . $token->user_id);
         $token->expires_at = Carbon::now()->addSeconds($expire);
-        $token->internal = $su;
+        $token->internal = $internal;
         $token->save();
         return $token;
     }

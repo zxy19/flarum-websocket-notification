@@ -4,21 +4,20 @@ namespace Xypp\WsNotification\Websockets\Worker;
 
 use Flarum\Settings\SettingsRepositoryInterface;
 use GuzzleHttp\Psr7\Uri;
-use WebSocket\Message\Text;
+use Ratchet\Client\WebSocket;
 use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Util\AddrUtil;
 use Xypp\WsNotification\WebsocketAccessToken;
 use Xypp\WsNotification\Websockets\Helper\DataDispatchHelper;
 use Xypp\WsNotification\Websockets\Helper\Logger;
 use Illuminate\Console\Command;
+use function React\Async\await;
 
 class Worker
 {
     protected $settings;
-    protected ?\Websocket\Client $connection = null;
     protected Logger $logger;
     protected DataDispatchHelper $dataDispatchHelper;
-    protected int $lastPing;
     public function __construct(SettingsRepositoryInterface $settings, Logger $logger, DataDispatchHelper $dataDispatchHelper)
     {
         $this->settings = $settings;
@@ -31,39 +30,37 @@ class Worker
         $this->logger->setCommandContext($context);
         $token = WebsocketAccessToken::generate(null, 10, true);
         $uri = new Uri(AddrUtil::getAddr($this->settings, $token, true));
-        $this->connection = new \WebSocket\Client($uri);
-        $this->connection->setLogger($this->logger);
-        $this->connection->onClose(function () {
-            $this->logger->error("Connection closed");
-        });
-        $this->connection->onText(
-            function ($client, $connection, $message) {
-                $this->message($client, $connection, $message);
-            }
+        $loop = \React\EventLoop\Factory::create();
+        await(
+            \Ratchet\Client\connect($uri, [], [], $loop)
+                ->then(function (WebSocket $connection) use ($loop) {
+                    $this->logger->verbose("Connected");
+                    $connection->send(json_encode([
+                        "type" => "worker"
+                    ]));
+                    $connection->on("close", function () {
+                        $this->logger->error("Connection closed");
+                    });
+                    $connection->on(
+                        "message",
+                        function (\Ratchet\RFC6455\Messaging\MessageInterface $message) use ($connection) {
+                            $this->message($connection, $message);
+                        }
+                    );
+                    $loop->addPeriodicTimer(
+                        30,
+                        function () use ($connection) {
+                            $connection->send(json_encode([
+                                "type" => "ping"
+                            ]));
+                        }
+                    );
+                })
         );
-        $this->connection->onConnect(
-            function () {
-                $this->logger->verbose("Connected");
-                $this->connection->send(new Text(json_encode([
-                    "type" => "worker"
-                ])));
-            }
-        );
-        $this->connection->onTick(
-            function () {
-                if (time() - $this->lastPing > 30) {
-                    $this->connection->send(new Text(json_encode([
-                        "type" => "ping"
-                    ])));
-                    $this->lastPing = time();
-                }
-            }
-        );
-        $this->connection->start();
     }
-    public function message($client, $connection, $message)
+    public function message($connection,string $message)
     {
-        $data = json_decode($message->getContent());
+        $data = json_decode($message);
         if (!$data)
             return;
         if ($data->type == "job") {
@@ -84,11 +81,11 @@ class Worker
                     $user_id,
                     $path,
                     $model,
-                    function ($attr) use ($ids, $path, $state) {
+                    function ($attr) use ($ids, $path, $state, $connection) {
                         if ($state && !$attr) {
                             $attr = ["state" => true];
                         }
-                        $this->connection->send(new Text(json_encode([
+                        $connection->send(json_encode([
                             "type" => "dispatch",
                             "ids" => $ids,
                             "data" => [
@@ -96,14 +93,14 @@ class Worker
                                 "path" => strval($path),
                                 "data" => $attr
                             ]
-                        ])));
+                        ]));
                     }
                 );
             }
-            $this->connection->send(new Text(json_encode([
+            $connection->send(json_encode([
                 "type" => "job_done",
                 "job_id" => $data->job_id
-            ])));
+            ]));
         }
     }
 }

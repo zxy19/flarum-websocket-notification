@@ -8,7 +8,9 @@
     "license": "MIT",
     "require": {
         "flarum/core": "^1.2.0",
-        "phrity/websocket": "2.2"
+        "cboden/ratchet": "^0.4.4",
+        "ratchet/pawl": "^0.4.1",
+        "react/async": "^4.3"
     },
     "authors": [
         {

@@ -17,7 +17,6 @@ abstract class AbstractDataDispatchType
     /**
      * Deliver model data to client.
      * 
-     * @param \Websocket\Connection $connection 
      * @param ModelPath $path 
      * @param $model
      * @param callable $sync call with array.

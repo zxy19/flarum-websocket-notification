@@ -9,118 +9,143 @@ use Xypp\WsNotification\Data\ModelPath;
 use Xypp\WsNotification\Job\SyncModelJob;
 use Xypp\WsNotification\Util\AddrUtil;
 use Xypp\WsNotification\WebsocketAccessToken;
-use WebSocket\Message\Text;
 use WebSocket;
+use function React\Async\await;
 
 class Bridge
 {
-    protected ?\Websocket\Client $connection = null;
-    protected $formed = false;
     protected $settings;
-    protected int $sentJobs;
-
     protected Queue $queue;
+    protected $jobs = [];
+    protected ?int $timeout = null;
+    protected bool $noQueue = false;
     public function __construct(SettingsRepositoryInterface $settings, Queue $queue)
     {
         $this->settings = $settings;
         $this->queue = $queue;
-        $this->connection = null;
-        $this->formed = false;
-        $this->sentJobs = 0;
-    }
-    public function __destruct()
-    {
-        if ($this->formed)
-            if ($this->connection) {
-                $this->connection->close();
-            }
     }
 
-    public function queue(ModelPath $path)
+    /**
+     * Sync Model, decide whether to queue or sync automatically
+     * @param \Xypp\WsNotification\Data\ModelPath $path
+     * @return static
+     */
+    public function sync(ModelPath $path)
     {
-        if (!$this->settings->get("xypp.ws_notification.common.enable"))
-            return;
-        if (!$this->settings->get("xypp.ws_notification.common.queue")) {
-            $this->sync($path);
-        } else
-            $this->queue->push(new SyncModelJob($path));
+        $this->jobs[] = ["sync", $path];
+        return $this;
     }
-
-    protected function formConnection(): bool
+    public function _sync(\Ratchet\Client\WebSocket $connection, ModelPath $path): bool
     {
-        if ($this->formed)
-            if ($this->connection) {
-                if ($this->connection->isConnected() && $this->connection->isWritable()) {
-                    return true;
-                }
-            }
-        $token = WebsocketAccessToken::generate(null, 10, true);
-        $uri = new Uri(AddrUtil::getAddr($this->settings, $token, true));
-        $this->connection = new \WebSocket\Client($uri);
         try {
-            $this->connection->connect();
-        } catch (\Exception $e) {
-            unset($this->connection);
-            return false;
-        }
-        $this->formed = true;
-        return true;
-    }
-    public function sync(ModelPath $path): bool
-    {
-        if (!$this->formConnection())
-            return false;
-        try {
-            $this->sentJobs++;
-            $this->connection->send(new Text(json_encode([
+            $connection->send(json_encode([
                 "type" => "sync",
                 "path" => $path->getPath()
-            ])));
+            ]));
         } catch (\Exception $e) {
             return false;
         }
         return true;
     }
-    public function state($user_id, $newStates): bool
+    
+    /**
+     * Execute send jobs
+     * @return bool
+     */
+    public function exec(): bool
     {
-        if (!$this->formConnection())
+        // If disabled, return false
+        if (!$this->settings->get("xypp.ws_notification.common.enable"))
             return false;
+        // If queue is enabled, push jobs to queue
+        if($this->settings->get("xypp.ws_notification.common.queue") && !$this->noQueue){
+            foreach($this->jobs as $_job) {
+                [$type, $data] = $_job;
+                if ($type === "sync") {
+                    $this->queue->push(new SyncModelJob($data));
+                }
+            }
+            $this->jobs = [];
+            return true;
+        }
+        $token = WebsocketAccessToken::generate(null, 10, true);
+        $uri = AddrUtil::getAddr($this->settings, $token, true);
+        $done = false;
         try {
-            $this->sentJobs++;
-            $this->connection->send(new Text(json_encode([
-                "type" => "state",
-                "user_id" => $user_id,
-                "states" => $newStates,
-            ])));
+            $loop = \React\EventLoop\Factory::create();
+            await(
+                \Ratchet\Client\connect($uri, [], [], $loop)
+                    ->then(function (\Ratchet\Client\WebSocket $conn) use ($loop, &$done) {
+                        // Just return with done if no jobs
+                        if (count($this->jobs) === 0) {
+                            $done = true;
+                            $conn->close();
+                        }
+
+                        // Handle done
+                        $conn->on('message', function (\Ratchet\RFC6455\Messaging\MessageInterface $msg) use ($conn, &$done) {
+                            $data = json_decode($msg->getContents());
+                            if ($data->type == "done") {
+                                $conn->close();
+                                $done = true;
+                            }
+                        });
+
+                        // Send jobs, count how many jobs are sent
+                        $sentJob = 0;
+                        foreach ($this->jobs as $_job) {
+                            [$type, $data] = $_job;
+                            if ($type === "sync") {
+                                if ($this->_sync($conn, $data)) {
+                                    $sentJob++;
+                                }
+                            }
+                        }
+
+                        // If timeout is set, wait for all jobs to be done
+                        if ($this->timeout) {
+                            $conn->send(json_encode([
+                                "type" => "waitAll",
+                                "jobs" => $sentJob
+                            ]));
+                            $loop->addTimer($this->timeout, function () use ($conn) {
+                                $conn->close();
+                            });
+                        } else {
+                            $conn->close();
+                            $done = true;
+                        }
+                    })
+            );
         } catch (\Exception $e) {
             return false;
+        } finally {
+            $this->jobs = [];
         }
-        return true;
+        return $done;
     }
-    public function check(): bool
+    /**
+     * 设置执行的时候等待
+     * @param int $timeout
+     * @return static
+     */
+    public function waitAll(?int $timeout = 60)
     {
-        return $this->formConnection();
+        $this->timeout = $timeout;
+        return $this;
     }
 
-    public function waitAll(int $timeout = 60)
+    public function autoWait()
     {
-        $startTime = time();
-        $this->connection->send(new Text(json_encode([
-            "type" => "waitAll",
-            "jobs" => $this->sentJobs
-        ])));
-        $this->connection->onText(function ($client, $connection, $message) {
-            $data = json_decode($message->getContent());
-            if ($data->type == "done") {
-                $this->connection->stop();
-            }
-        });
-        $this->connection->onTick(function () use ($startTime, $timeout) {
-            if (time() - $startTime > $timeout) {
-                $this->connection->stop();
-            }
-        });
-        $this->connection->start();
-        $this->sentJobs = 0;
+        if ($this->settings->get("xypp.ws_notification.common.wait_done")) {
+            $this->waitAll();
+        }
+        return $this;
+    }
+
+    public function noQueue()
+    {
+        $this->noQueue = true;
+        return $this;
     }
 }

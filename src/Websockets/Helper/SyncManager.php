@@ -182,7 +182,7 @@ class SyncManager
             }
         }
     }
-    public function addWorker(\Websocket\Connection $connection)
+    public function addWorker(\Xypp\WsNotification\Websockets\Socket\Connection $connection)
     {
         $worker = new WorkerRegister($connection);
         $connection->setMeta("worker", true);

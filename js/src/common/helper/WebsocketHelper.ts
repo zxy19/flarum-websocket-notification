@@ -37,9 +37,9 @@ export class WebsocketHelper {
             this.ws = undefined;
         } catch (e) { }
     }
-    async start() {
+    async start(forceStart = false) {
         if (this.app) {
-            if (!this.app.forum.attribute<boolean>("xyppWsnEnable")) {
+            if (!this.app.forum.attribute<boolean>("xyppWsnEnable") && !forceStart) {
                 return;
             }
             this.sendInConnecting = [];

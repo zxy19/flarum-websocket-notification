@@ -19,6 +19,13 @@ class WebsocketConfig
         $this->pk = $pk;
         $this->selfSigned = $selfSigned;
     }
+    public function getUri()
+    {
+        if($this->cert){
+            return "ssl://{$this->address}:{$this->port}";
+        }
+        return "tcp://{$this->address}:{$this->port}";
+    }
     public static function readSetting(SettingsRepositoryInterface $setting, $group = 'ws', string $defaultAddress = "0.0.0.0", int $defaultPort = 18080)
     {
         $address = $setting->get("xypp.ws_notification." . $group . '.address', $defaultAddress);

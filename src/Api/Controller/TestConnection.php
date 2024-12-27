@@ -18,7 +18,7 @@ class TestConnection implements RequestHandlerInterface
     {
         RequestUtil::getActor($request)->assertAdmin();
 
-        if($this->bridge->check()){
+        if($this->bridge->exec()){
             return new JsonResponse([
                 "result" => true
             ]);

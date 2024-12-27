@@ -26,7 +26,7 @@ class CreateWebsocketAccessTokenController extends AbstractCreateController
     public function data(\Psr\Http\Message\ServerRequestInterface $request, \Tobscure\JsonApi\Document $document)
     {
         if (!$this->settings->get("xypp.ws_notification.options.no_state_check"))
-            if (!$this->bridge->check()) {
+            if (!$this->bridge->exec()) {
                 throw new ValidationException([
                     "msg" => $this->translator->trans("xypp-websocket-notification.api.not-running")
                 ]);

@@ -159,7 +159,7 @@ export default class adminPage extends ExtensionPage {
     testConnection() {
         this.testing = true;
         m.redraw();
-        this.wsHelper?.start();
+        this.wsHelper?.start(true);
     }
     testResult(rest: string) {
         if (rest === "online") {
