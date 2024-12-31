@@ -80,6 +80,12 @@ class Bridge
 
             $connector($uri)
                 ->then(function (\Ratchet\Client\WebSocket $conn) use ($loop, &$done) {
+                    /**
+                     * if set wait;
+                     * @var \React\EventLoop\TimerInterface $timer
+                     */
+                    $timer = null;
+
                     // Just return with done if no jobs
                     if (count($this->jobs) === 0) {
                         $done = true;
@@ -87,10 +93,11 @@ class Bridge
                     }
 
                     // Handle done
-                    $conn->on('message', function (\Ratchet\RFC6455\Messaging\MessageInterface $msg) use ($conn, &$done) {
-                        $data = json_decode($msg->getContents());
+                    $conn->on('message', function ($msg) use ($conn, &$done, $timer, $loop) {
+                        $data = json_decode($msg);
                         if ($data->type == "done") {
                             $conn->close();
+                            $loop->stop();
                             $done = true;
                         }
                     });
